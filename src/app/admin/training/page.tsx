@@ -18,7 +18,7 @@ export default async function TrainingManagementPage() {
         title="培训管理"
         description="查看当前培训路径、课程与学习单元。内容编辑统一使用 Payload 数据库。"
         actions={(
-          <Link className="button button--primary" href="/cms/collections/learning-paths">
+          <Link className="button button--primary" href="/admin/training?new=path">
             编辑培训内容 <ArrowRight size={16} aria-hidden="true" />
           </Link>
         )}
@@ -54,7 +54,7 @@ export default async function TrainingManagementPage() {
                   <div className="management-row__body"><strong>{course.title}</strong><p>{course.summary || '暂未填写课程说明。'}</p></div>
                   <span className="text-muted text-small">{course.unitCount} 个单元</span>
                   <div className="management-row__progress"><progress className="compact-progress" max="100" value={course.progress} /><span className="tabular">{course.progress}%</span></div>
-                  <Link className="table-action" href="/cms/collections/courses">编辑课程 <ArrowRight size={14} aria-hidden="true" /></Link>
+                  <Link className="table-action" href={`/admin/training?edit=${course.id}`}>编辑课程 <ArrowRight size={14} aria-hidden="true" /></Link>
                 </div>
               )) : <div className="empty-state empty-state--compact"><p>当前路径还没有课程。</p></div>}
             </div>
