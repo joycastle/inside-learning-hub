@@ -1,24 +1,15 @@
 import { ArrowLeft, ArrowRight, BookOpenText, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { QuizPanel } from '@/components/quiz-panel'
-import { CompleteUnitButton } from '@/components/complete-unit-button'
 import { VideoLesson } from '@/components/video-lesson'
-import { DocumentPreview } from '@/components/document-preview'
-import { onboardingPath } from '@/lib/demo-data'
-import { getCourseById } from '@/lib/payload-data'
-import { requireUser } from '@/lib/auth'
-import { createMediaDownloadUrl } from '@/lib/media-storage'
+import { getEnrollments } from '@/lib/api/server'
 
 export default async function LessonPage({ params }: { params: Promise<{ courseId: string; unitId: string }> }) {
   const { courseId, unitId } = await params
-  const user = await requireUser()
-  const course = process.env.DEMO_MODE === 'false'
-    ? await getCourseById(courseId, user)
-    : onboardingPath.courses.find((item) => item.id === courseId)
+  const paths = await getEnrollments()
+  const course = paths.flatMap((path) => path.courses).find((item) => item.id === courseId)
   const unit = course?.units.find((item) => item.id === unitId)
   if (!course || !unit) notFound()
-  const mediaUrl = unit.mediaKey ? await createMediaDownloadUrl(unit.mediaKey) : undefined
 
   return (
     <div className="lesson-layout">
@@ -36,14 +27,14 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
 
       <main className="lesson-main">
         <article className="lesson-content">
-          <div className="lesson-content__meta">{unit.type === 'video' ? '入职说明视频' : '入职学习单元'}</div>
+          <div className="lesson-content__meta">入职说明视频</div>
           <h1>{unit.title}</h1>
           <p className="lesson-content__lead">{unit.description}</p>
 
           {unit.type === 'video' ? (
             <VideoLesson
               unitId={unit.id}
-              source={unit.videoUrl ?? mediaUrl}
+              source={unit.videoUrl ?? unit.externalUrl}
               initialProgress={unit.progress}
               hasQuiz={unit.hasQuiz}
               quizUnlocked
@@ -54,7 +45,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
                   <h2 id="lesson-handout-title">新人培训手册</h2>
                   <p>HTML 讲义 · 视频配套内容已整理为独立网页，可随时打开阅读。</p>
                 </div>
-                <Link className="button button--secondary" href={`/learn/onboarding-handout?courseId=${encodeURIComponent(course.id)}&unitId=${encodeURIComponent(unit.id)}`}>
+                <Link className="button button--secondary" href="/learn/onboarding-handout">
                   打开讲义<ArrowRight size={16} aria-hidden="true" />
                 </Link>
               </aside>
@@ -78,21 +69,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
           ) : null}
 
           {unit.type === 'pdf' ? (
-            <div className="surface document-unit"><h2 className="section-heading">PDF 资料</h2><p className="section-description">资料通过私有存储加载，访问地址会定时失效。</p>{mediaUrl ? <DocumentPreview title={unit.title} type="pdf" url={mediaUrl} /> : <div className="empty-state empty-state--compact"><p>当前单元还没有配置 PDF 文件。</p></div>}</div>
-          ) : null}
-
-          {unit.type === 'html' ? (
-            <div className="surface document-unit"><h2 className="section-heading">HTML 讲义</h2><p className="section-description">该文件将在隔离的预览区域中打开，避免影响系统页面。</p>{mediaUrl ? <DocumentPreview title={unit.title} type="html" url={mediaUrl} /> : <div className="empty-state empty-state--compact"><p>当前单元还没有配置 HTML 文件。</p></div>}</div>
-          ) : null}
-
-          {unit.type !== 'video' && unit.hasQuiz ? (
-            <QuizPanel unitId={unit.id} unlocked />
-          ) : null}
-
-          {unit.type !== 'video' && !unit.hasQuiz ? (
-            <div className="unit-complete-action">
-              <CompleteUnitButton unitId={unit.id} initiallyCompleted={unit.status === 'completed'} />
-            </div>
+            <div className="surface empty-state"><h2 className="section-heading">PDF 预览</h2><p>正式环境通过 MinIO 签名地址加载 PDF，并在预览失败时提供下载。</p></div>
           ) : null}
 
         </article>

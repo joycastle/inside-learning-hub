@@ -4,14 +4,11 @@ import { AdminFilters } from '@/components/admin-filters'
 import { AdminPageHeader } from '@/components/admin-page-header'
 import { CompletionTrendChart } from '@/components/analytics-charts'
 import { StatusBadge } from '@/components/status-badge'
-import { buildCourseFunnel, calculateOverviewMetrics, filterTrainingRecords, getVideoRates } from '@/lib/analytics'
-import {
-  demoFeishuOrganization,
-  trainingRecords,
-  videoAnalytics,
-} from '@/lib/demo-data'
+import { buildCourseFunnel, calculateOverviewMetrics, getVideoRates } from '@/lib/analytics'
+import { getAnalyticsOverview, getOrganization } from '@/lib/api/server'
+import { requireAdmin } from '@/lib/auth'
 import { formatDateTime, formatDuration } from '@/lib/format'
-import { getTrainingRecords, getVideoAnalytics } from '@/lib/payload-data'
+import type { VideoAnalytics } from '@/lib/types'
 
 export const metadata = { title: '数据概览' }
 
@@ -32,7 +29,7 @@ const getDefaultDateRange = () => {
 const formatShortDate = (date: Date) => `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 
 /** 将趋势横轴和聚合值统一约束在筛选日期内，避免固定“最近 7 天”与筛选器口径冲突。 */
-const buildCompletionTrend = (dateFrom: string, dateTo: string, records: typeof trainingRecords) => {
+const buildCompletionTrend = (dateFrom: string, dateTo: string, records: import('@/lib/types').TrainingRecord[]) => {
   const start = new Date(`${dateFrom}T00:00:00`)
   const end = new Date(`${dateTo}T00:00:00`)
   const dayCount = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1)
@@ -51,20 +48,26 @@ const buildCompletionTrend = (dateFrom: string, dateTo: string, records: typeof 
 }
 
 export default async function AdminOverviewPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const records = process.env.DEMO_MODE === 'false' ? await getTrainingRecords() : trainingRecords
-  const videos = process.env.DEMO_MODE === 'false' ? await getVideoAnalytics() : videoAnalytics
+  await requireAdmin()
   const params = await searchParams
+  const [overview, organization] = await Promise.all([getAnalyticsOverview(), getOrganization()])
+  const trainingRecords = overview.records
+  const videoAnalytics = overview.videos as unknown as VideoAnalytics[]
   const valueOf = (key: string) => typeof params[key] === 'string' ? params[key] : undefined
   const defaultDateRange = getDefaultDateRange()
   const dateFrom = valueOf('dateFrom') ?? defaultDateRange.dateFrom
   const dateTo = valueOf('dateTo') ?? defaultDateRange.dateTo
   const department = valueOf('department')
-  const filteredRecords = filterTrainingRecords(records, { dateFrom, dateTo, department, path: valueOf('path'), course: valueOf('course') })
+  const filteredRecords = trainingRecords.filter((record) => {
+    if (department && department !== 'all' && record.departmentName !== department) return false
+    if (dateFrom && record.assignedAt < dateFrom) return false
+    if (dateTo && record.assignedAt > dateTo) return false
+    return true
+  })
   const metrics = calculateOverviewMetrics(filteredRecords)
   const funnel = buildCourseFunnel(filteredRecords)
   const completionTrend = buildCompletionTrend(dateFrom, dateTo, filteredRecords)
   const rangeLabel = `${dateFrom.replaceAll('-', '/')} — ${dateTo.replaceAll('-', '/')}`
-  const exportQuery = new URLSearchParams({ dateFrom, dateTo, department: department ?? 'all', path: valueOf('path') ?? 'onboarding' }).toString()
   const departmentCompletion = Array.from(new Set(filteredRecords.map((record) => record.departmentName))).map((departmentName) => {
     const departmentRecords = filteredRecords.filter((record) => record.departmentName === departmentName)
     return {
@@ -72,7 +75,7 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
       rate: Math.round((departmentRecords.filter((record) => record.status === 'completed').length / departmentRecords.length) * 100),
     }
   }).sort((a, b) => b.rate - a.rate)
-  const filteredVideos = videos.filter((video) => video.lastWatchedAt.slice(0, 10) >= dateFrom && video.lastWatchedAt.slice(0, 10) <= dateTo)
+  const filteredVideos = videoAnalytics.filter((video) => video.lastWatchedAt.slice(0, 10) >= dateFrom && video.lastWatchedAt.slice(0, 10) <= dateTo)
   const metricItems = [
     { label: '应分配人数', value: metrics.assigned, suffix: '人' },
     { label: '已开始人数', value: metrics.started, suffix: '人' },
@@ -89,15 +92,15 @@ export default async function AdminOverviewPage({ searchParams }: { searchParams
       <AdminPageHeader
         eyebrow="培训运营"
         title="数据概览"
-        description={process.env.DEMO_MODE === 'false' ? '核对入职培训的完成、完播与测评情况，数据来自 PostgreSQL 聚合查询。' : '核对入职培训的完成、完播与测评情况。当前为演示数据。'}
+        description="核对入职培训的完成、完播与测评情况。页面、详情与 CSV 均读取 PostgreSQL 的统一查询口径。"
         actions={(
-          <a className="button button--secondary" href={`/api/admin/exports/training.csv?${exportQuery}`}>
+          <a className="button button--secondary" href="/api/v1/admin/exports/training.csv">
             <Download size={16} aria-hidden="true" />导出明细
           </a>
         )}
       />
       <AdminFilters
-        organization={demoFeishuOrganization}
+        organization={organization}
         defaults={{
           dateFrom,
           dateTo,

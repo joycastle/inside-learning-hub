@@ -1,22 +1,53 @@
 services:
   web:
     build: .
-    env_file: .env
+    environment:
+      API_INTERNAL_BASE_URL: http://api:3001
+      API_PROXY_BASE_URL: http://api:3001
+      CMS_PUBLIC_BASE_URL: http://hub-cms.localhost:8080
+      ENABLE_DEV_LOGIN: "true"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build: ../inside-learning-hub-backend
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/inside_hub
+      PAYLOAD_SECRET: local-docker-payload-secret-2026-change-me
+      APP_URL: http://hub-cms.localhost:8080
+      PUBLIC_APP_URL: http://localhost:8080
+      ALLOWED_ORIGINS: http://localhost:8080
+      ENABLE_DEV_LOGIN: "true"
+      ALLOW_DEV_LOGIN_IN_PRODUCTION_BUILD: "true"
+      SEED_DEVELOPMENT_DATA: "true"
+      FORCE_LOCAL_MIGRATION_AFTER_DEV_PUSH: "true"
+      DEV_EMPLOYEE_EMAIL: employee@inside.local
+      DEV_ADMIN_EMAIL: admin@inside.local
+      DEV_SUPER_ADMIN_EMAIL: superadmin@inside.local
       MINIO_ENABLED: "true"
       MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKET: inside-hub
+      MINIO_REGION: us-east-1
+      MINIO_FORCE_PATH_STYLE: "true"
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_healthy
-    ports:
-      - "3000:3000"
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/v1/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
     restart: unless-stopped
 
   postgres:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: inside_hub
       POSTGRES_USER: postgres
@@ -26,6 +57,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    ports:
+      - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
     ports:
@@ -39,13 +72,10 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 10
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
       - minio-data:/data
     restart: unless-stopped
@@ -63,7 +93,10 @@ services:
   nginx:
     image: nginx:1.29-alpine
     depends_on:
-      - web
+      web:
+        condition: service_started
+      api:
+        condition: service_healthy
     ports:
       - "8080:80"
     volumes:

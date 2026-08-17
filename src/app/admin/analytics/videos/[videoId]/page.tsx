@@ -1,20 +1,15 @@
 import { ArrowLeft, Download } from 'lucide-react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { AdminPageHeader } from '@/components/admin-page-header'
 import { VideoDistributionChart } from '@/components/analytics-charts'
-import { getVideoRates } from '@/lib/analytics'
-import { trainingRecords, videoAnalytics } from '@/lib/demo-data'
+import { getVideoAnalytics } from '@/lib/api/server'
+import { requireAdmin } from '@/lib/auth'
 import { formatDateTime, formatDuration } from '@/lib/format'
-import { getTrainingRecords, getVideoAnalytics } from '@/lib/payload-data'
 
 export default async function VideoAnalyticsPage({ params }: { params: Promise<{ videoId: string }> }) {
+  await requireAdmin()
   const { videoId } = await params
-  const availableVideos = process.env.DEMO_MODE === 'false' ? await getVideoAnalytics() : videoAnalytics
-  const video = availableVideos.find((item) => item.id === videoId)
-  if (!video) notFound()
-  const records = process.env.DEMO_MODE === 'false' ? await getTrainingRecords() : trainingRecords
-  const rates = getVideoRates(video)
+  const { video, rates, employees } = await getVideoAnalytics(videoId)
 
   return (
     <>
@@ -23,7 +18,7 @@ export default async function VideoAnalyticsPage({ params }: { params: Promise<{
         eyebrow="视频学习统计"
         title={video.title}
         description={`最近观看 ${formatDateTime(video.lastWatchedAt)}。达到 90% 记为完播，统计用于培训运营。`}
-        actions={<a className="button button--secondary" href="/api/admin/exports/training.csv"><Download size={16} aria-hidden="true" />导出培训明细</a>}
+        actions={<button className="button button--secondary" type="button"><Download size={16} aria-hidden="true" />导出名单</button>}
       />
       <section className="metric-strip metric-strip--six" aria-label="视频学习指标">
         <div className="metric-item"><span>应学习人数</span><strong className="tabular">{video.assigned}<small>人</small></strong></div>
@@ -51,9 +46,9 @@ export default async function VideoAnalyticsPage({ params }: { params: Promise<{
           <table className="data-table">
             <thead><tr><th>员工</th><th>部门</th><th>观看状态</th><th>最大进度</th><th>累计观看</th><th>测评成绩</th></tr></thead>
             <tbody>
-              {records.map((record) => {
-                const viewingStatus = record.videoProgress >= 90 ? '已完播' : record.videoProgress > 0 ? '未完播' : '未开播'
-                return <tr key={record.userId}><td><strong>{record.userName}</strong></td><td>{record.departmentName}</td><td><span className="publish-state" data-state={viewingStatus}>{viewingStatus}</span></td><td className="tabular">{record.videoProgress}%</td><td className="tabular">{record.videoProgress ? formatDuration(Math.round((record.videoProgress / 100) * 14)) : '—'}</td><td className="tabular">{record.bestScore ?? '—'}</td></tr>
+              {employees.map((record) => {
+                const viewingStatus = record.progress >= 90 ? '已完播' : record.progress > 0 ? '未完播' : '未开播'
+                return <tr key={record.userId}><td><strong>{record.userName}</strong></td><td>{record.departmentName}</td><td><span className="publish-state" data-state={viewingStatus}>{viewingStatus}</span></td><td className="tabular">{record.progress}%</td><td className="tabular">{record.watchedSeconds ? formatDuration(Math.round(record.watchedSeconds / 60)) : '—'}</td><td className="tabular">—</td></tr>
               })}
             </tbody>
           </table>

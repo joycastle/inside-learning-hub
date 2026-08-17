@@ -1,20 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/session-core'
 
-export async function proxy(request: NextRequest) {
+const SESSION_COOKIE_NAME = 'inside_session'
+
+export function proxy(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-  const user = token ? await verifySessionToken(token) : null
-  const canAccessAdmin = user?.role === 'admin' || user?.role === 'superAdmin'
-
-  if (!canAccessAdmin) {
-    return NextResponse.json(
-      { message: user ? '当前账号没有管理权限' : '请先登录' },
-      { status: user ? 403 : 401 },
-    )
-  }
+  if (!token) return NextResponse.redirect(new URL('/login', request.url))
+  // Proxy 只做无密钥的乐观检查；角色与停用状态由布局调用 auth/me 实时判定。
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/admin/:path*'],
 }

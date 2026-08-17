@@ -9,7 +9,7 @@ export function useFeishuOrganization(initialOrganization: FeishuOrganization) {
 
   useEffect(() => {
     let active = true
-    fetch('/api/admin/feishu/organization', { cache: 'no-store' })
+    fetch('/api/v1/admin/feishu/organization', { cache: 'no-store' })
       .then((response) => response.ok ? response.json() as Promise<FeishuOrganization> : null)
       .then((result) => {
         if (active && result) setOrganization(result)
@@ -25,7 +25,7 @@ export function useFeishuOrganization(initialOrganization: FeishuOrganization) {
   const sync = async () => {
     setSyncing(true)
     try {
-      const response = await fetch('/api/admin/feishu/organization', { cache: 'no-store' })
+      const response = await fetch('/api/v1/admin/feishu/organization', { cache: 'no-store' })
       if (response.ok) setOrganization(await response.json() as FeishuOrganization)
     } finally {
       setSyncing(false)
