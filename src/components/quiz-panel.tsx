@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { AlertCircle, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
+import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
 import type { QuizAttemptQuestion, QuizAttemptResult } from '@/lib/types'
 
 interface QuizAttemptPayload {
@@ -9,7 +9,7 @@ interface QuizAttemptPayload {
   questions: QuizAttemptQuestion[]
 }
 
-export function QuizPanel({ unitId, unlocked }: { unitId: string; unlocked: boolean }) {
+export function QuizPanel({ unitId }: { unitId: string }) {
   const [attempt, setAttempt] = useState<QuizAttemptPayload | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string[]>>({})
@@ -21,7 +21,10 @@ export function QuizPanel({ unitId, unlocked }: { unitId: string; unlocked: bool
     setLoading(true)
     setError('')
     try {
-      const response = await fetch(`/api/quizzes/${unitId}/attempts`, { method: 'POST' })
+      const response = await fetch(`/api/v1/learning/units/${unitId}/quiz-attempts`, {
+        method: 'POST',
+        headers: { 'Idempotency-Key': crypto.randomUUID() },
+      })
       if (!response.ok) throw new Error('暂时无法生成测评，请稍后重试。')
       const payload = (await response.json()) as QuizAttemptPayload
       setAttempt(payload)
@@ -55,31 +58,19 @@ export function QuizPanel({ unitId, unlocked }: { unitId: string; unlocked: bool
     setLoading(true)
     setError('')
     try {
-      const response = await fetch(`/api/quiz-attempts/${attempt.attemptId}/submit`, {
+      const response = await fetch(`/api/v1/quiz-attempts/${attempt.attemptId}/submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
         body: JSON.stringify({ answers }),
       })
       if (!response.ok) throw new Error('提交失败，答案已保留，请重试。')
       const nextResult = (await response.json()) as QuizAttemptResult
       setResult(nextResult)
-      if (nextResult.passed) {
-        await fetch(`/api/learning/units/${unitId}/complete`, { method: 'POST' })
-      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '提交失败，答案已保留，请重试。')
     } finally {
       setLoading(false)
     }
-  }
-
-  if (!unlocked) {
-    return (
-      <section className="surface empty-state" aria-labelledby="quiz-locked-title">
-        <h2 className="section-heading" id="quiz-locked-title">单元测评尚未解锁</h2>
-        <p>完成本单元后，系统会从题库随机抽取题目。</p>
-      </section>
-    )
   }
 
   if (!attempt) {
@@ -98,7 +89,7 @@ export function QuizPanel({ unitId, unlocked }: { unitId: string; unlocked: bool
   if (result) {
     return (
       <section className="surface quiz-shell quiz-result" aria-live="polite">
-        {result.passed ? <CheckCircle2 size={30} strokeWidth={1.6} aria-hidden="true" /> : <AlertCircle size={30} strokeWidth={1.6} aria-hidden="true" />}
+        <CheckCircle2 size={30} strokeWidth={1.6} aria-hidden="true" />
         <h2 className="section-heading">{result.passed ? '测评通过' : '继续巩固一下'}</h2>
         <div className="quiz-result__score tabular">{result.score}</div>
         <p className="text-muted">答对 {result.correctCount} / {result.totalCount} 道题</p>

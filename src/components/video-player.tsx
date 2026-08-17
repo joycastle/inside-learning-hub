@@ -8,12 +8,9 @@ export interface VideoPlayerProps {
   unitId: string
   source?: string
   initialProgress: number
-  onUnlocked?: () => void
 }
 
-const STORAGE_VERSION = 1
-
-export function VideoPlayer({ unitId, source, initialProgress, onUnlocked }: VideoPlayerProps) {
+export function VideoPlayer({ unitId, source, initialProgress }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const sessionIdRef = useRef(crypto.randomUUID())
   const sequenceRef = useRef(0)
@@ -33,14 +30,10 @@ export function VideoPlayer({ unitId, source, initialProgress, onUnlocked }: Vid
       sequenceRef.current += 1
       lastReportedAtRef.current = now
       setProgress((current) => {
-        const maximumProgress = Math.max(current, nextProgress)
-        localStorage.setItem(`inside:video:${unitId}:v${STORAGE_VERSION}`, String(maximumProgress))
-        return maximumProgress
+        return Math.max(current, nextProgress)
       })
 
-      if (nextProgress >= 90) onUnlocked?.()
-
-      await fetch(`/api/videos/${unitId}/progress`, {
+      await fetch(`/api/v1/learning/units/${unitId}/video-progress`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,29 +46,27 @@ export function VideoPlayer({ unitId, source, initialProgress, onUnlocked }: Vid
         }),
       }).catch(() => undefined)
     },
-    [onUnlocked, unitId],
+    [unitId],
   )
 
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    const stored = Number(localStorage.getItem(`inside:video:${unitId}:v${STORAGE_VERSION}`))
     const restorePosition = () => {
-      if (Number.isFinite(stored) && stored > 0 && video.duration) {
-        video.currentTime = Math.min(video.duration - 1, (stored / 100) * video.duration)
-        setProgress((current) => Math.max(current, stored))
+      if (initialProgress > 0 && video.duration) {
+        video.currentTime = Math.min(video.duration - 1, (initialProgress / 100) * video.duration)
       }
     }
     video.addEventListener('loadedmetadata', restorePosition, { once: true })
     return () => video.removeEventListener('loadedmetadata', restorePosition)
-  }, [unitId])
+  }, [initialProgress])
 
   if (!source) {
     return (
       <div className="surface empty-state">
         <PlayCircle size={32} strokeWidth={1.5} aria-hidden="true" />
         <h2 className="section-heading">视频将在课程开放后提供</h2>
-        <p>当前演示没有为这个单元配置媒体文件。</p>
+        <p>内容管理员尚未为这个单元配置媒体文件。</p>
       </div>
     )
   }

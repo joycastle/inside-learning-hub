@@ -1,6 +1,5 @@
 import { requireUser } from '@/lib/auth'
-import { onboardingPath } from '@/lib/demo-data'
-import { getLearningPathForUser } from '@/lib/payload-data'
+import { getEnrollments, getQuizAttempts } from '@/lib/api/server'
 import { formatDate } from '@/lib/format'
 import { ProgressBar } from '@/components/progress-bar'
 import { StatusBadge } from '@/components/status-badge'
@@ -10,7 +9,7 @@ export const metadata = { title: '我的' }
 
 export default async function MePage() {
   const user = await requireUser()
-  const path = process.env.DEMO_MODE === 'false' ? await getLearningPathForUser(user) : onboardingPath
+  const [paths, attempts] = await Promise.all([getEnrollments(), getQuizAttempts()])
 
   return (
     <div className="page-container main-content">
@@ -29,21 +28,17 @@ export default async function MePage() {
         </section>
         <section>
           <h2 className="section-heading">当前培训</h2>
-          <div className="record-list">
-            <div className="record-row">
-              <span><strong>{path?.title ?? '暂无培训路径'}</strong><div className="text-small text-muted">{path ? `截止 ${formatDate(path.dueAt)}` : '等待管理员分配'}</div></span>
-              <span><ProgressBar value={path?.progress ?? 0} label="入职路径进度" /></span>
-              <strong className="tabular">{path?.progress ?? 0}%</strong>
-            </div>
-          </div>
+          <div className="record-list">{paths.map((path) => <div className="record-row" key={path.enrollmentId}>
+            <span><strong>{path.title}</strong><div className="text-small text-muted">截止 {formatDate(path.dueAt)}</div></span>
+            <span><ProgressBar value={path.progress} label={`${path.title}进度`} /></span>
+            <strong className="tabular">{path.progress}%</strong>
+          </div>)}</div>
           <h2 className="section-heading profile-section-heading">最近测评</h2>
-          <div className="record-list">
-            <div className="record-row">
-              <span><strong>欢迎加入：单元测评</strong><div className="text-small text-muted">8 月 12 日 · 第 2 次尝试</div></span>
-              <strong className="tabular">86 分</strong>
-              <StatusBadge status="completed" />
-            </div>
-          </div>
+          <div className="record-list">{attempts.map((attempt) => <div className="record-row" key={String(attempt.id)}>
+            <span><strong>单元测评</strong><div className="text-small text-muted">{attempt.startedAt ? formatDate(String(attempt.startedAt)) : '未提交'}</div></span>
+            <strong className="tabular">{attempt.score === undefined ? '—' : `${attempt.score} 分`}</strong>
+            <StatusBadge status={attempt.passed ? 'completed' : 'inProgress'} />
+          </div>)}</div>
         </section>
       </div>
     </div>

@@ -20,7 +20,7 @@ const getDefaultDueDate = () => {
 }
 
 export function AdminPeopleManager({ initialRecords, initialOrganization }: AdminPeopleManagerProps) {
-  const [records, setRecords] = useState<TrainingRecord[]>(initialRecords)
+  const [records, setRecords] = useState(initialRecords)
   const { organization, syncing } = useFeishuOrganization(initialOrganization)
   const [query, setQuery] = useState('')
   const [department, setDepartment] = useState('all')
@@ -45,56 +45,46 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
   }
 
   const assignTraining = async (formData: FormData) => {
-    const pathTitle = String(formData.get('pathTitle') ?? '新员工入职学习路径')
-    const courseTitle = String(formData.get('courseTitle') ?? '新人入职说明')
+    const pathId = String(formData.get('pathId') ?? initialRecords[0]?.pathId ?? '')
     const dueAt = String(formData.get('dueAt') ?? getDefaultDueDate())
     if (!selectedEmployeeIds.length) {
       setFeedback('请至少选择一名员工。')
       return
     }
-    const response = await fetch('/api/admin/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userIds: selectedEmployeeIds, dueAt }) })
-    if (!response.ok) { setFeedback('培训分配保存失败，请稍后重试。'); return }
-    const selectedEmployees = organization.employees.filter((employee) => selectedEmployeeIds.includes(employee.id))
-    setRecords((current) => {
-      const existingIds = new Set(current.map((record) => record.userId))
-      const updated = current.map((record) => selectedEmployeeIds.includes(record.userId) ? {
-        ...record,
-        pathTitle,
-        courseTitle,
-        dueAt,
-      } : record)
-      const additions: TrainingRecord[] = selectedEmployees.filter((employee) => !existingIds.has(employee.id)).map((employee) => ({
-        userId: employee.id,
-        userName: employee.name,
-        departmentName: employee.departmentName,
-        pathTitle,
-        courseTitle,
-        assignedAt: new Date().toISOString().slice(0, 10),
-        dueAt,
-        status: 'notStarted',
-        videoProgress: 0,
-        attempts: 0,
-      }))
-      return [...updated, ...additions]
+    if (!pathId) {
+      setFeedback('当前没有可分配的培训路径，请先在内容后台发布并配置默认路径。')
+      return
+    }
+    const response = await fetch('/api/v1/admin/enrollments/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+      body: JSON.stringify({ userIds: selectedEmployeeIds, learningPathId: pathId, dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
     })
-    closeAssignDialog()
-    setFeedback(`已向 ${selectedEmployeeIds.length} 名员工分配培训。`)
-    setSelectedEmployeeIds([])
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({})) as { message?: string }
+      setFeedback(error.message ?? '培训分配失败，请稍后重试。')
+      return
+    }
+    window.location.reload()
   }
 
   const adjustAssignment = async (formData: FormData) => {
     if (!adjustRecord) return
     const dueAt = String(formData.get('dueAt') ?? adjustRecord.dueAt)
-    const courseTitle = String(formData.get('courseTitle') ?? adjustRecord.courseTitle)
-    const departmentId = String(formData.get('departmentId') ?? '')
-    const selectedDepartment = organization.departments.find((item) => item.id === departmentId)
-    if (selectedDepartment) {
-      const departmentResponse = await fetch('/api/admin/users/department', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ openId: adjustRecord.userId, departmentId: selectedDepartment.id, departmentName: selectedDepartment.name }) })
-      if (!departmentResponse.ok) { setFeedback('部门保存失败，请确认员工已完成飞书同步。'); return }
+    if (!adjustRecord.enrollmentId) {
+      setFeedback('缺少培训记录标识，请刷新页面后重试。')
+      return
     }
-    const response = await fetch('/api/admin/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userIds: [adjustRecord.userId], dueAt }) })
-    if (!response.ok) { setFeedback('培训调整保存失败，请稍后重试。'); return }
-    setRecords((current) => current.map((record) => record.userId === adjustRecord.userId ? { ...record, dueAt, courseTitle, departmentName: selectedDepartment?.name ?? record.departmentName } : record))
+    const response = await fetch(`/api/v1/admin/enrollments/${adjustRecord.enrollmentId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
+    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({})) as { message?: string }
+      setFeedback(error.message ?? '调整失败，请稍后重试。')
+      return
+    }
+    setRecords((current) => current.map((record) => record.enrollmentId === adjustRecord.enrollmentId ? { ...record, dueAt } : record))
     setAdjustRecord(null)
     setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
   }
@@ -145,8 +135,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       >
         <form className="admin-form" id="assign-training-form" action={assignTraining}>
           <div className="admin-form__grid">
-            <label><span>培训路径</span><select className="form-control" name="pathTitle" defaultValue="新员工入职学习路径"><option>新员工入职学习路径</option></select></label>
-            <label><span>课程</span><select className="form-control" name="courseTitle" defaultValue="新人入职说明"><option>新人入职说明</option><option>信息安全基础</option></select></label>
+            <label><span>培训路径</span><select className="form-control" name="pathId" defaultValue={initialRecords[0]?.pathId}>{Array.from(new Map(initialRecords.filter((record) => record.pathId).map((record) => [record.pathId, record.pathTitle]))).map(([id, title]) => <option value={id} key={id}>{title}</option>)}</select></label>
           </div>
           <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={getDefaultDueDate()} required /></label>
           <fieldset className="employee-picker">
@@ -173,9 +162,8 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       >
         {adjustRecord ? <form className="admin-form" id="adjust-training-form" action={adjustAssignment}>
           <div className="selected-person"><strong>{adjustRecord.userName}</strong><span>{adjustRecord.departmentName} · {adjustRecord.pathTitle}</span></div>
-          <label><span>所属部门</span><select className="form-control" name="departmentId" defaultValue={organization.departments.find((item) => item.name === adjustRecord.departmentName)?.id ?? ''}><option value="">保持当前部门</option>{organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={adjustRecord.dueAt} required /></label>
-          <label><span>当前 / 追加课程</span><select className="form-control" name="courseTitle" defaultValue={adjustRecord.courseTitle}><option>新人入职说明</option><option>信息安全基础</option><option>员工制度必读</option></select></label>
+          <label><span>当前课程</span><input className="form-control" value={adjustRecord.courseTitle} disabled /></label>
         </form> : null}
       </AdminDialog>
     </>

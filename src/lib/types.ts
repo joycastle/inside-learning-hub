@@ -13,7 +13,7 @@ export interface AppUser {
   joinedAt: string
 }
 
-export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video' | 'html'
+export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video'
 export type LearningStatus = 'notStarted' | 'inProgress' | 'completed' | 'overdue'
 
 export interface LearningUnit {
@@ -31,7 +31,6 @@ export interface LearningUnit {
   externalUrl?: string
   videoUrl?: string
   mediaId?: string
-  mediaKey?: string
 }
 
 export interface Course {
@@ -51,6 +50,7 @@ export interface Course {
 
 export interface LearningPath {
   id: string
+  enrollmentId: string
   title: string
   summary: string
   dueAt: string
@@ -108,8 +108,6 @@ export interface ServiceArticle {
   type: 'article' | 'pdf' | 'feishuDoc' | 'externalLink'
   updatedAt: string
   url?: string
-  mediaId?: string
-  mediaKey?: string
   tags: string[]
   source?: string
   sections?: Array<{
@@ -119,19 +117,11 @@ export interface ServiceArticle {
   }>
 }
 
-export interface Announcement {
-  id: string
-  title: string
-  summary?: string
-  audience: 'all' | 'newEmployees' | 'departments'
-  startsAt?: string
-  endsAt?: string
-  targetUrl?: string
-}
-
 export interface TrainingRecord {
-  userId: string
+  enrollmentId?: string
+  pathId?: string
   courseId?: string
+  userId: string
   userName: string
   departmentName: string
   pathTitle: string
@@ -170,10 +160,11 @@ export interface FeishuEmployee {
   avatarUrl?: string
   departmentIds: string[]
   departmentName: string
+  role?: UserRole
 }
 
 export interface FeishuOrganization {
-  source: 'feishu' | 'demo'
+  source: 'feishu' | 'database'
   departments: FeishuDepartment[]
   employees: FeishuEmployee[]
   syncedAt: string

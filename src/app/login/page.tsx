@@ -27,22 +27,22 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="login-box">
           <h2>登录乐堡家园</h2>
           <p>使用公司飞书账号继续。</p>
-          <a className="button button--primary" href="/api/auth/feishu/start">
+          <a className="button button--primary" href="/api/v1/auth/feishu/start">
             使用飞书登录<ArrowRight size={17} aria-hidden="true" />
           </a>
           {error === 'feishu-not-configured' ? <p className="login-message" role="status">本地尚未配置飞书凭证，请使用下方演示账号。</p> : null}
-          <div className="login-divider">本地演示</div>
-          {process.env.DEMO_MODE !== 'false' ? <div className="demo-login-actions">
-            <form action="/api/auth/demo-login" method="post">
+          {process.env.ENABLE_DEV_LOGIN === 'true' ? <div className="login-divider">本地开发</div> : null}
+          {process.env.ENABLE_DEV_LOGIN === 'true' ? <div className="demo-login-actions">
+            <form action="/api/v1/auth/dev-login" method="post">
               <input type="hidden" name="role" value="employee" />
               <button className="button button--secondary" type="submit">体验员工端</button>
             </form>
-            <form action="/api/auth/demo-login" method="post">
+            <form action="/api/v1/auth/dev-login" method="post">
               <input type="hidden" name="role" value="admin" />
               <button className="button button--secondary" type="submit">体验管理端</button>
             </form>
           </div> : null}
-          {process.env.DEMO_MODE !== 'false' ? <p className="demo-note"><ShieldCheck size={14} aria-hidden="true" /> 演示模式使用示例数据；生产环境关闭后仅保留飞书登录。</p> : null}
+          {process.env.ENABLE_DEV_LOGIN === 'true' ? <p className="demo-note"><ShieldCheck size={14} aria-hidden="true" /> 开发登录读取 PostgreSQL seed 数据，生产构建会禁用。</p> : null}
         </div>
       </section>
     </main>
