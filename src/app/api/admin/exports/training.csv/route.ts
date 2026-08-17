@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/auth'
+import { filterTrainingRecords } from '@/lib/analytics'
 import { trainingRecords } from '@/lib/demo-data'
 import { statusLabel } from '@/lib/format'
 import { getTrainingRecords } from '@/lib/payload-data'
@@ -8,11 +9,19 @@ const escapeCsv = (value: string | number | undefined) => {
   return `"${text.replaceAll('"', '""')}"`
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   await requireAdmin()
   const headers = ['员工', '部门', '学习路径', '课程', '分配时间', '截止时间', '状态', '完成时间', '视频进度', '最高分', '尝试次数']
   const records = process.env.DEMO_MODE === 'false' ? await getTrainingRecords() : trainingRecords
-  const rows = records.map((record) => [
+  const params = new URL(request.url).searchParams
+  const filteredRecords = filterTrainingRecords(records, {
+    dateFrom: params.get('dateFrom') ?? undefined,
+    dateTo: params.get('dateTo') ?? undefined,
+    department: params.get('department') ?? undefined,
+    path: params.get('path') ?? undefined,
+    course: params.get('course') ?? undefined,
+  })
+  const rows = filteredRecords.map((record) => [
     record.userName,
     record.departmentName,
     record.pathTitle,

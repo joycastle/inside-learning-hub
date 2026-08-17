@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { requireUser } from '@/lib/auth'
 import { demoUnitProgress, getVideoProgressKey } from '@/lib/demo-store'
-import { getPayloadUserId, payloadClient } from '@/lib/payload-data'
+import { canUserAccessUnit, getPayloadUserId, payloadClient } from '@/lib/payload-data'
 
 export async function POST(_request: Request, { params }: { params: Promise<{ unitId: string }> }) {
   const user = await requireUser()
   const { unitId } = await params
   if (process.env.DEMO_MODE === 'false') {
+    if (!await canUserAccessUnit(user, unitId)) return NextResponse.json({ message: '无权访问该学习单元' }, { status: 403 })
     const payload = await payloadClient()
     const payloadUserId = await getPayloadUserId(user)
     const progressKey = `${payloadUserId}:${unitId}`

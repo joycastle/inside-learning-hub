@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { requireUser } from '@/lib/auth'
 import { demoVideoProgress, getVideoProgressKey } from '@/lib/demo-store'
 import { computeVideoProgressUpdate } from '@/lib/video-progress'
-import { getPayloadUserId, payloadClient } from '@/lib/payload-data'
+import { canUserAccessUnit, getPayloadUserId, payloadClient } from '@/lib/payload-data'
 
 const progressSchema = z.object({
   sessionId: z.string().min(1).max(100),
@@ -21,6 +21,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ unit
   if (!parsed.success) return NextResponse.json({ message: '视频进度数据格式错误' }, { status: 400 })
 
   if (process.env.DEMO_MODE === 'false') {
+    if (!await canUserAccessUnit(user, unitId)) return NextResponse.json({ message: '无权访问该视频单元' }, { status: 403 })
     const payload = await payloadClient()
     const payloadUserId = await getPayloadUserId(user)
     const progressKey = `${payloadUserId}:${unitId}`

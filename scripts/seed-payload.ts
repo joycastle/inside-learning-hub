@@ -2,14 +2,19 @@ import config from '@payload-config'
 import { getPayload } from 'payload'
 import { onboardingPath, questionBank, serviceArticles } from '@/lib/demo-data'
 
+// Seed 需要兼容 Payload migration 前后的关系 ID（Postgres 默认是 number）。
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PayloadClient = any
+
 const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
 
-const findBySlug = async (payload: any, collection: 'learning-paths' | 'courses' | 'service-categories' | 'knowledge-articles', value: string) => {
+const findBySlug = async (payload: PayloadClient, collection: 'learning-paths' | 'courses' | 'service-categories' | 'knowledge-articles', value: string) => {
   const result = await payload.find({ collection, where: { slug: { equals: value } }, limit: 1, overrideAccess: true })
   return result.docs[0]
 }
 
 const seed = async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload = await getPayload({ config }) as any
   const existingPath = await findBySlug(payload, 'learning-paths', onboardingPath.id)
   const path = existingPath ?? await payload.create({

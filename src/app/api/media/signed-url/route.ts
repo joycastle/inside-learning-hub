@@ -2,14 +2,18 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireUser } from '@/lib/auth'
 import { createMediaDownloadUrl } from '@/lib/media-storage'
+import { canUserAccessMedia } from '@/lib/payload-data'
 
 const querySchema = z.string().min(1).max(512)
 
 export async function GET(request: Request) {
-  await requireUser()
+  const user = await requireUser()
   const key = new URL(request.url).searchParams.get('key')
   const parsed = querySchema.safeParse(key)
   if (!parsed.success) return NextResponse.json({ message: '缺少媒体资源标识' }, { status: 400 })
+  if (process.env.DEMO_MODE === 'false' && !await canUserAccessMedia(user, parsed.data)) {
+    return NextResponse.json({ message: '无权访问该媒体资源' }, { status: 403 })
+  }
 
   try {
     return NextResponse.json({ url: await createMediaDownloadUrl(parsed.data), expiresIn: 900 })

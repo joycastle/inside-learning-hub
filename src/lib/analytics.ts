@@ -30,6 +30,11 @@ export const calculateOverviewMetrics = (records: TrainingRecord[]): OverviewMet
     (record) => (record.bestScore ?? 0) >= 80 && record.attempts === 1,
   ).length
 
+  const completionDurations = records
+    .filter((record) => record.completedAt)
+    .map((record) => (new Date(record.completedAt as string).getTime() - new Date(record.assignedAt).getTime()) / 86400000)
+    .filter((days) => Number.isFinite(days) && days >= 0)
+
   return {
     assigned,
     started,
@@ -38,9 +43,28 @@ export const calculateOverviewMetrics = (records: TrainingRecord[]): OverviewMet
     overdue,
     averageScore,
     firstPassRate: percentage(passedFirstTry, scoredRecords.length),
-    averageCompletionDays: 4.6,
+    averageCompletionDays: completionDurations.length
+      ? Math.round((completionDurations.reduce((total, days) => total + days, 0) / completionDurations.length) * 10) / 10
+      : 0,
   }
 }
+
+export interface AnalyticsFilters {
+  dateFrom?: string
+  dateTo?: string
+  department?: string
+  path?: string
+  course?: string
+}
+
+export const filterTrainingRecords = (records: TrainingRecord[], filters: AnalyticsFilters) => records.filter((record) => {
+  if (filters.department && filters.department !== 'all' && record.departmentName !== filters.department) return false
+  if (filters.dateFrom && record.assignedAt < filters.dateFrom) return false
+  if (filters.dateTo && record.assignedAt > filters.dateTo) return false
+  if (filters.path && filters.path !== 'all' && filters.path !== 'onboarding' && record.pathTitle !== filters.path) return false
+  if (filters.course && filters.course !== 'all' && record.courseTitle !== filters.course) return false
+  return true
+})
 
 export const getVideoRates = (video: VideoAnalytics) => ({
   startRate: percentage(video.started, video.assigned),

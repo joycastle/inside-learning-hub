@@ -4,7 +4,7 @@ import { requireUser } from '@/lib/auth'
 import { onboardingPath, questionBank } from '@/lib/demo-data'
 import { demoAttempts } from '@/lib/demo-store'
 import { createQuizAttempt } from '@/lib/quiz-engine'
-import { getPayloadUserId, getQuestionsForUnit, payloadClient } from '@/lib/payload-data'
+import { canUserAccessUnit, getPayloadUserId, getQuestionsForUnit, payloadClient } from '@/lib/payload-data'
 
 export async function POST(_request: Request, { params }: { params: Promise<{ unitId: string }> }) {
   const user = await requireUser()
@@ -24,6 +24,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ un
 
   const course = onboardingPath.courses.find((item) => item.units.some((unit) => unit.id === unitId))
   if (process.env.DEMO_MODE === 'false') {
+    if (!await canUserAccessUnit(user, unitId)) return NextResponse.json({ message: '无权访问该测评单元' }, { status: 403 })
     const courseQuestions = await getQuestionsForUnit(unitId)
     if (courseQuestions.length < 3) return NextResponse.json({ message: '当前课程题库题目不足' }, { status: 409 })
     const selected = createQuizAttempt(courseQuestions, 3)

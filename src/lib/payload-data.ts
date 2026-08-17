@@ -2,7 +2,7 @@ import 'server-only'
 
 import config from '@payload-config'
 import { getPayload } from 'payload'
-import type { AppUser, Course, LearningPath, LearningUnit, QuizQuestion, ServiceArticle, TrainingRecord } from '@/lib/types'
+import type { Announcement, AppUser, Course, LearningPath, LearningUnit, QuizQuestion, ServiceArticle, TrainingRecord, VideoAnalytics } from '@/lib/types'
 
 type PayloadId = string | number
 type Relation<T = { id: PayloadId }> = PayloadId | T
@@ -16,6 +16,7 @@ interface PayloadUnit {
   durationMinutes?: number | null
   externalUrl?: string | null
   quizRule?: Relation | null
+  media?: Relation<{ id: PayloadId; storageKey?: string | null }> | null
 }
 
 interface PayloadCourse {
@@ -69,6 +70,19 @@ interface PayloadArticle {
   tags?: Array<{ label: string }>
   category: Relation<PayloadCategory>
   updatedAt: string
+  media?: Relation<{ id: PayloadId; storageKey?: string | null }> | null
+}
+
+interface PayloadAnnouncement {
+  id: PayloadId
+  title: string
+  summary?: string | null
+  audience?: Announcement['audience']
+  departments?: Relation[] | null
+  startsAt?: string | null
+  endsAt?: string | null
+  targetUrl?: string | null
+  _status?: 'draft' | 'published'
 }
 
 interface PayloadQuestion {
@@ -88,6 +102,8 @@ const isDocument = (value: unknown): value is { id: PayloadId } => (
 
 const relationId = (value: unknown) => String(isDocument(value) ? value.id : value ?? '')
 
+// Payload 的集合类型由本地配置生成，业务 Repository 需要同时支持迁移前后的关系形态。
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const payloadClient = async () => getPayload({ config }) as any
 
 const toUnit = (unit: PayloadUnit, progress?: PayloadProgress): LearningUnit => ({
@@ -102,6 +118,7 @@ const toUnit = (unit: PayloadUnit, progress?: PayloadProgress): LearningUnit => 
   progress: progress?.progress ?? 0,
   hasQuiz: Boolean(unit.quizRule),
   externalUrl: unit.externalUrl ?? undefined,
+  mediaKey: isDocument(unit.media) ? (unit.media.storageKey ?? undefined) : undefined,
 })
 
 const toCourse = (course: PayloadCourse, progressByUnit: Map<string, PayloadProgress>): Course => {
@@ -252,6 +269,50 @@ export async function getTrainingRecords(): Promise<TrainingRecord[]> {
   })
 }
 
+export async function getVideoAnalytics(): Promise<VideoAnalytics[]> {
+  const payload = await payloadClient()
+  const [unitsResult, enrollmentsResult, progressResult] = await Promise.all([
+    payload.find({ collection: 'units', where: { type: { equals: 'video' } }, limit: 1000, overrideAccess: true }),
+    payload.find({ collection: 'enrollments', depth: 3, limit: 1000, overrideAccess: true }),
+    payload.find({ collection: 'video-progress', limit: 1000, overrideAccess: true }),
+  ])
+  const progress = progressResult.docs as Array<{ unit: Relation; user: Relation; maxProgress?: number; watchedSeconds?: number; lastPlayedAt?: string; completed?: boolean }>
+  return (unitsResult.docs as Array<{ id: PayloadId; title: string }>).map((unit) => {
+    const assignedUserIds = new Set<string>()
+    for (const enrollment of enrollmentsResult.docs as Array<{ user: Relation; learningPath?: Relation<PayloadPath> }>) {
+      const path = isDocument(enrollment.learningPath) ? enrollment.learningPath as PayloadPath : null
+      const includesUnit = path?.courses?.some((course) => {
+        const resolvedCourse = isDocument(course) ? course as PayloadCourse : null
+        return Boolean(resolvedCourse?.units?.some((candidate) => relationId(candidate) === String(unit.id)))
+      })
+      if (includesUnit) assignedUserIds.add(relationId(enrollment.user))
+    }
+    const unitProgress = progress.filter((item) => relationId(item.unit) === String(unit.id))
+    const started = unitProgress.filter((item) => (item.maxProgress ?? 0) > 0)
+    const completed = unitProgress.filter((item) => item.completed || (item.maxProgress ?? 0) >= 90)
+    const latest = unitProgress.map((item) => item.lastPlayedAt).filter((value): value is string => Boolean(value)).sort().at(-1)
+    const bucketRanges = [[0, 10], [10, 25], [25, 50], [50, 75], [75, 90], [90, 101]] as const
+    const buckets = bucketRanges.map(([min, max], index) => ({
+      label: ['0–10%', '10–25%', '25–50%', '50–75%', '75–90%', '90–100%'][index],
+      value: unitProgress.filter((item) => {
+        const value = item.maxProgress ?? 0
+        return index === 0 ? value >= min && value <= max : value > min && value < max
+      }).length,
+    }))
+    return {
+      id: String(unit.id),
+      title: unit.title,
+      assigned: assignedUserIds.size,
+      started: started.length,
+      completed: completed.length,
+      averageWatchMinutes: unitProgress.length ? Math.round((unitProgress.reduce((sum, item) => sum + (item.watchedSeconds ?? 0), 0) / unitProgress.length / 60) * 10) / 10 : 0,
+      averageProgress: unitProgress.length ? Math.round(unitProgress.reduce((sum, item) => sum + (item.maxProgress ?? 0), 0) / unitProgress.length) : 0,
+      lastWatchedAt: latest ?? new Date(0).toISOString(),
+      buckets,
+    }
+  })
+}
+
 export async function getServiceArticles(): Promise<ServiceArticle[]> {
   const payload = await payloadClient()
   const result = await payload.find({ collection: 'knowledge-articles', where: { status: { equals: 'published' } }, depth: 2, limit: 1000, sort: '-updatedAt', overrideAccess: true })
@@ -265,11 +326,39 @@ export async function getServiceArticles(): Promise<ServiceArticle[]> {
       type: article.type ?? 'article',
       updatedAt: article.updatedAt,
       url: article.externalUrl ?? undefined,
+      mediaKey: isDocument(article.media) ? (article.media.storageKey ?? undefined) : undefined,
       tags: (article.tags ?? []).map((tag) => tag.label),
       source: article.source ?? undefined,
       sections: article.bodyText ? [{ title: '正文', paragraphs: article.bodyText.split(/\n+/).filter(Boolean) }] : undefined,
     }
   })
+}
+
+export async function getAnnouncementsForUser(user: AppUser): Promise<Announcement[]> {
+  const payload = await payloadClient()
+  const result = await payload.find({ collection: 'announcements', depth: 2, limit: 1000, sort: '-createdAt', overrideAccess: true })
+  const now = Date.now()
+  const joinedAt = new Date(user.joinedAt).getTime()
+  const departmentResult = user.departmentId
+    ? await payload.find({ collection: 'departments', where: { feishuDepartmentId: { equals: user.departmentId } }, limit: 1, overrideAccess: true })
+    : { docs: [] }
+  const payloadDepartmentId = departmentResult.docs[0]?.id
+  return (result.docs as unknown as PayloadAnnouncement[]).filter((announcement) => {
+    if (announcement._status === 'draft') return false
+    if (announcement.startsAt && new Date(announcement.startsAt).getTime() > now) return false
+    if (announcement.endsAt && new Date(announcement.endsAt).getTime() < now) return false
+    if (announcement.audience === 'newEmployees' && (!Number.isFinite(joinedAt) || now - joinedAt > 30 * 86400000)) return false
+    if (announcement.audience === 'departments' && !announcement.departments?.some((department) => relationId(department) === String(payloadDepartmentId))) return false
+    return true
+  }).map((announcement) => ({
+    id: String(announcement.id),
+    title: announcement.title,
+    summary: announcement.summary ?? undefined,
+    audience: announcement.audience ?? 'all',
+    startsAt: announcement.startsAt ?? undefined,
+    endsAt: announcement.endsAt ?? undefined,
+    targetUrl: announcement.targetUrl ?? undefined,
+  }))
 }
 
 export async function getQuestionsForUnit(unitId: string): Promise<QuizQuestion[]> {
@@ -297,6 +386,53 @@ export async function getPayloadUserId(user: AppUser): Promise<PayloadId> {
   const payload = await payloadClient()
   const result = await payload.find({ collection: 'users', where: { feishuOpenId: { equals: user.id } }, limit: 1, overrideAccess: true })
   return result.docs[0]?.id ?? user.id
+}
+
+/**
+ * 业务 API 必须先确认单元属于当前员工的有效分配，再允许写入学习数据。
+ * 这层校验不能依赖客户端传入的 userId，也不能只依赖 unitId 的格式。
+ */
+export async function canUserAccessUnit(user: AppUser, unitId: string): Promise<boolean> {
+  const payload = await payloadClient()
+  const payloadUserId = await getPayloadUserId(user)
+  const enrollments = await payload.find({
+    collection: 'enrollments',
+    where: { user: { equals: payloadUserId } },
+    depth: 3,
+    limit: 1000,
+    overrideAccess: true,
+  })
+  return (enrollments.docs as Array<{ learningPath?: Relation<PayloadPath> }>).some((enrollment) => {
+    const path = isDocument(enrollment.learningPath) ? enrollment.learningPath as PayloadPath : null
+    return Boolean(path?.courses?.some((course) => {
+      const resolvedCourse = isDocument(course) ? course as PayloadCourse : null
+      return Boolean(resolvedCourse?.units?.some((unit) => relationId(unit) === unitId))
+    }))
+  })
+}
+
+export async function canUserAccessMedia(user: AppUser, storageKey: string): Promise<boolean> {
+  const payload = await payloadClient()
+  const media = await payload.find({
+    collection: 'media',
+    where: { storageKey: { equals: storageKey } },
+    limit: 1,
+    overrideAccess: true,
+  })
+  const mediaId = media.docs[0]?.id
+  if (!mediaId) return false
+  const units = await payload.find({ collection: 'units', where: { media: { equals: mediaId } }, limit: 1000, overrideAccess: true })
+  const articles = await payload.find({ collection: 'knowledge-articles', where: { media: { equals: mediaId }, status: { equals: 'published' } }, limit: 1000, overrideAccess: true })
+  for (const unit of units.docs as Array<{ id: PayloadId }>) {
+    if (await canUserAccessUnit(user, String(unit.id))) return true
+  }
+  return articles.docs.length > 0
+}
+
+export async function getAdminFeishuOpenIds(): Promise<string[]> {
+  const payload = await payloadClient()
+  const result = await payload.find({ collection: 'users', where: { role: { in: ['admin', 'superAdmin'] } }, limit: 1000, overrideAccess: true })
+  return (result.docs as Array<{ feishuOpenId?: string }>).map((user) => user.feishuOpenId).filter((id): id is string => Boolean(id))
 }
 
 export { payloadClient }
