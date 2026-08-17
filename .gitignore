@@ -1,0 +1,11 @@
+node_modules
+.next
+.env
+.env.*
+!.env.example
+payload-types.ts
+test-results
+playwright-report
+coverage
+.DS_Store
+*.tsbuildinfo

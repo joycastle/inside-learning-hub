@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-14T12:00:00+08:00",
+  "title": "Design System: 乐堡家园",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "乐堡蓝",
+        "canonical": "#009fdf",
+        "tonalRamp": ["#003247", "#005373", "#00769f", "#009fdf", "#34b6e8", "#74ccef", "#b5e5f7", "#edf9fd"]
+      },
+      "accent-strong": {
+        "role": "primary",
+        "displayName": "深乐堡蓝",
+        "canonical": "#007da9",
+        "tonalRamp": ["#002b3a", "#00445d", "#005f81", "#007da9", "#2b9ac0", "#67b9d4", "#addbe8", "#ecf8fb"]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "雾蓝",
+        "canonical": "#e8f7fc",
+        "tonalRamp": ["#15333e", "#24515f", "#417381", "#6597a4", "#8cbac5", "#b6d9e1", "#d7edf3", "#f2fbfd"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "工作台底色",
+        "canonical": "#fafafa",
+        "tonalRamp": ["#262626", "#404040", "#5c5c5c", "#787878", "#969696", "#b5b5b5", "#d6d6d6", "#fafafa"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "基础表面",
+        "canonical": "#fefefe",
+        "tonalRamp": ["#292929", "#434343", "#5f5f5f", "#7c7c7c", "#9a9a9a", "#bababa", "#dddddd", "#fefefe"]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "抬升表面",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#2a2a2a", "#444444", "#606060", "#7d7d7d", "#9b9b9b", "#bbbbbb", "#dddddd", "#ffffff"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "细线",
+        "canonical": "#e5e5e5",
+        "tonalRamp": ["#242424", "#3b3b3b", "#545454", "#6e6e6e", "#8a8a8a", "#a8a8a8", "#c7c7c7", "#e5e5e5"]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "强细线",
+        "canonical": "#d4d4d4",
+        "tonalRamp": ["#222222", "#383838", "#505050", "#686868", "#818181", "#9d9d9d", "#b9b9b9", "#d4d4d4"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "主文字",
+        "canonical": "#171717",
+        "tonalRamp": ["#171717", "#303030", "#4b4b4b", "#676767", "#858585", "#a5a5a5", "#c8c8c8", "#eeeeee"]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "次文字",
+        "canonical": "#525252",
+        "tonalRamp": ["#1c1c1c", "#353535", "#525252", "#6d6d6d", "#898989", "#a8a8a8", "#c8c8c8", "#eeeeee"]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "弱文字",
+        "canonical": "#737373",
+        "tonalRamp": ["#202020", "#3a3a3a", "#555555", "#737373", "#909090", "#adadad", "#cccccc", "#eeeeee"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "员工端页面主标题，每页仅一个。" },
+      "headline": { "displayName": "Headline", "purpose": "管理端页面标题与高优先级内容。" },
+      "title": { "displayName": "Title", "purpose": "区域标题与主要内容卡片标题。" },
+      "body": { "displayName": "Body", "purpose": "说明、文章与表格正文。" },
+      "label": { "displayName": "Label", "purpose": "按钮、导航、字段标签与表头。" },
+      "data": { "displayName": "Data", "purpose": "日期、进度、编号与统计数字。" }
+    },
+    "shadows": [
+      { "name": "micro", "value": "0 1px 2px rgb(0 0 0 / 4%)", "purpose": "静态按钮、输入与少量内容表面的最小分离。" },
+      { "name": "interactive", "value": "0 6px 18px rgb(0 0 0 / 6%)", "purpose": "可点击卡片或主操作悬停时的短暂抬升。" },
+      { "name": "overlay", "value": "0 18px 48px rgb(0 0 0 / 12%)", "purpose": "菜单、命令面板和模态对话框。" }
+    ],
+    "motion": [
+      { "name": "ease-entrance", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "内容、菜单与大表面进入。" },
+      { "name": "ease-state", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "悬停、焦点、选中和按下状态。" },
+      { "name": "fast", "value": "120ms", "purpose": "按下、图标和轻量颜色反馈。" },
+      { "name": "base", "value": "180ms", "purpose": "大多数状态变化与焦点环。" },
+      { "name": "slow", "value": "260ms", "purpose": "弹窗、菜单和内容区域进入。" }
+    ],
+    "breakpoints": [
+      { "name": "compact-desktop", "value": "900px" },
+      { "name": "mobile", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "区域内唯一的主要操作，稳定、克制并提供快速触觉反馈。",
+      "html": "<button class=\"ds-btn-primary\">保存更改</button>",
+      "css": ".ds-btn-primary { min-height: 40px; padding: 10px 16px; border: 1px solid var(--accent); border-radius: var(--radius-md); background: var(--accent); color: #fff; font: 580 13px/1.4 var(--font-sans); box-shadow: var(--shadow-xs); transition: transform var(--dur-fast) var(--ease-state), background-color var(--dur-fast) var(--ease-state), box-shadow var(--dur-fast) var(--ease-state); } .ds-btn-primary:hover { background: var(--accent-strong); transform: translateY(-1px); } .ds-btn-primary:active { transform: scale(.98); } .ds-btn-primary:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--focus-ring); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "不与主操作争夺注意力的边框按钮。",
+      "html": "<button class=\"ds-btn-secondary\">取消</button>",
+      "css": ".ds-btn-secondary { min-height: 40px; padding: 10px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text-primary); font: 580 13px/1.4 var(--font-sans); box-shadow: var(--shadow-xs); transition: transform var(--dur-fast) var(--ease-state), border-color var(--dur-fast) var(--ease-state), background-color var(--dur-fast) var(--ease-state); } .ds-btn-secondary:hover { border-color: var(--border-strong); background: var(--surface); transform: translateY(-1px); } .ds-btn-secondary:active { transform: scale(.98); } .ds-btn-secondary:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--focus-ring); }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "员工服务、人员选择和全局检索共用的精密搜索字段。",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\"/></svg><input placeholder=\"搜索课程或服务\" /></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text-muted); box-shadow: var(--shadow-xs); transition: border-color var(--dur-fast) var(--ease-state), box-shadow var(--dur-base) var(--ease-state); } .ds-search svg { width: 18px; height: 18px; flex: none; } .ds-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text-primary); font: 420 15px/1.6 var(--font-sans); } .ds-search:hover { border-color: var(--border-strong); } .ds-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }"
+    },
+    {
+      "name": "Active Navigation",
+      "kind": "nav",
+      "description": "默认安静、悬停轻抬升、当前项以表面和品牌蓝确认位置。",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">首页</a><a class=\"is-active\" href=\"#\">学习</a><a href=\"#\">员工服务</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 4px; padding: 4px; color: var(--text-secondary); font: 520 13px/1.4 var(--font-sans); } .ds-nav a { padding: 7px 12px; border-radius: var(--radius-md); color: inherit; text-decoration: none; transition: color var(--dur-fast) var(--ease-state), background-color var(--dur-fast) var(--ease-state), transform var(--dur-fast) var(--ease-state); } .ds-nav a:hover { background: var(--surface); color: var(--text-primary); transform: translateY(-1px); } .ds-nav a.is-active { background: var(--surface-raised); color: var(--text-primary); box-shadow: var(--shadow-xs); } .ds-nav a:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--focus-ring); }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "description": "以中性表面承载状态，品牌蓝圆点提供辅助确认。",
+      "html": "<span class=\"ds-chip\"><span aria-hidden=\"true\"></span>进行中</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-raised); color: var(--text-secondary); font: 580 12px/1.4 var(--font-sans); } .ds-chip span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); } .ds-chip:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--focus-ring); }"
+    },
+    {
+      "name": "Content Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "用于有独立内容语义的克制容器，而不是默认分组手段。",
+      "html": "<article class=\"ds-card\"><p>新人入职说明</p><h3>继续观看入职介绍视频</h3><span>观看进度 68%</span></article>",
+      "css": ".ds-card { padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-xs); transition: transform var(--dur-base) var(--ease-state), box-shadow var(--dur-base) var(--ease-state); } .ds-card p, .ds-card span { margin: 0; color: var(--text-muted); font: 500 13px/1.5 var(--font-sans); } .ds-card h3 { margin: 8px 0 16px; color: var(--text-primary); font: 620 21px/1.35 var(--font-sans); letter-spacing: -.012em; } .ds-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); } .ds-card:focus-within { box-shadow: 0 0 0 3px var(--focus-ring); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "精密的内部工作台",
+    "overview": "乐堡家园是一套安静、可信、可快速操作的内部工作界面。近单色背景、严格网格、紧凑字距和充足留白构成主要质感；Logo 蓝只承担主操作、当前状态和关键反馈。动效必须解释状态变化或引导注意力，不作为装饰。",
+    "keyCharacteristics": [
+      "近白或近黑的中性工作表面，只使用一种品牌强调色。",
+      "员工端偏阅读与继续任务，管理端偏扫描与批量操作，但共享同一视觉语法。",
+      "细边框、小圆角、微阴影；不依赖厚重卡片和大面积颜色分区。",
+      "120–260ms 的短促动效，所有交互稳定、可中断并尊重减少动态效果设置。"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "一个视口内只有 Logo 蓝可以成为色彩焦点；成功、信息和选中状态沿用同一色系并通过文字或图标补足语义。", "section": "colors" },
+      { "name": "The Neutral First Rule", "body": "新区域先用留白、字号和中性表面建立层级，只有确认属于主要操作或关键状态后才使用强调色。", "section": "colors" },
+      { "name": "The Sans-Only Rule", "body": "产品界面不再混用衬线展示字体；品牌的高级感来自排版比例和间距，而不是字体风格冲突。", "section": "typography" },
+      { "name": "The Space Before Container Rule", "body": "优先用留白和分隔线组织内容；只有需要独立交互语义、抬升层级或明显边界时才增加容器。", "section": "layout" },
+      { "name": "The Flat by Default Rule", "body": "表面在静止状态尽量平；阴影只确认交互或解释浮层，不作为版式装饰。", "section": "elevation" }
+    ],
+    "dos": [
+      "Do 使用语义 token，而不是在组件中增加新的临时颜色、圆角、阴影或动效时长。",
+      "Do 让标题、正文、元数据和操作形成明确阅读顺序，并保持 4px 基础网格。",
+      "Do 为 hover、active、focus、disabled、loading、empty 和 error 提供稳定、可访问的反馈。"
+    ],
+    "donts": [
+      "Don't 使用渐变文字、玻璃拟态、厚重投影、硬偏移阴影、彩色大面积背景或装饰性数据图。",
+      "Don't 使用无语义的 eyebrow/kicker、emoji 图标、巨型营销标题或侧边强调条制造层级。",
+      "Don't 让按钮追随鼠标、磁吸移动、漂移或使用不可中断的长动画。"
+    ]
+  }
+}
