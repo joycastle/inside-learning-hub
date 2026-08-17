@@ -3,12 +3,14 @@ import { AdminManagerSettings } from '@/components/admin-manager-settings'
 import { AdminPageHeader } from '@/components/admin-page-header'
 import { requireAdmin } from '@/lib/auth'
 import { demoFeishuOrganization } from '@/lib/demo-data'
+import { getAdminFeishuOpenIds } from '@/lib/payload-data'
 
 export const metadata = { title: '系统设置' }
 
 export default async function SettingsPage() {
   const user = await requireAdmin()
   const isSuperAdmin = user.role === 'superAdmin'
+  const adminIds = process.env.DEMO_MODE === 'false' ? await getAdminFeishuOpenIds() : [user.id]
 
   return (
     <>
@@ -18,7 +20,7 @@ export default async function SettingsPage() {
         description="查看飞书同步、默认分配和存储配置。敏感值只通过环境变量提供，不在页面显示。"
       />
       <div className="settings-grid">
-        {isSuperAdmin ? <AdminManagerSettings initialOrganization={demoFeishuOrganization} currentUserId={user.id} /> : <section className="admin-panel settings-panel settings-panel--wide"><div className="settings-panel__heading"><div><h2>管理员配置</h2><p>仅超级管理员可以变更</p></div></div><p className="permission-note">当前账号没有修改管理员权限的能力。</p></section>}
+        {isSuperAdmin ? <AdminManagerSettings initialOrganization={demoFeishuOrganization} currentUserId={user.id} initialAdminIds={adminIds} /> : <section className="admin-panel settings-panel settings-panel--wide"><div className="settings-panel__heading"><div><h2>管理员配置</h2><p>仅超级管理员可以变更</p></div></div><p className="permission-note">当前账号没有修改管理员权限的能力。</p></section>}
         <section className="admin-panel settings-panel">
           <div className="settings-panel__heading"><div><h2>飞书组织同步</h2><p>登录与员工状态事件</p></div><span className="integration-state"><CheckCircle2 size={15} aria-hidden="true" />配置就绪</span></div>
           <dl className="settings-list">

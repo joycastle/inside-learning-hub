@@ -8,11 +8,12 @@ import type { FeishuOrganization } from '@/lib/types'
 export interface AdminManagerSettingsProps {
   initialOrganization: FeishuOrganization
   currentUserId: string
+  initialAdminIds?: string[]
 }
 
-export function AdminManagerSettings({ initialOrganization, currentUserId }: AdminManagerSettingsProps) {
+export function AdminManagerSettings({ initialOrganization, currentUserId, initialAdminIds = [currentUserId] }: AdminManagerSettingsProps) {
   const { organization, syncing, sync } = useFeishuOrganization(initialOrganization)
-  const [adminIds, setAdminIds] = useState<string[]>([currentUserId])
+  const [adminIds, setAdminIds] = useState<string[]>(initialAdminIds)
   const [selectedId, setSelectedId] = useState('')
   const [feedback, setFeedback] = useState('')
 

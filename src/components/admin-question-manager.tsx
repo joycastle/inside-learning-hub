@@ -42,13 +42,12 @@ const categoryLabel = (categoryId: string) => {
 }
 
 export function AdminQuestionManager({ initialPath, initialQuestions }: AdminQuestionManagerProps) {
-  const paths = [initialPath]
   const courseOptions = useMemo(() => {
-    const courses = paths.flatMap((path) => path.courses)
+    const courses = [initialPath].flatMap((path) => path.courses)
     const uniqueCourses = new Map(courses.map((course) => [course.id, course]))
     initialPath.courses.forEach((course) => uniqueCourses.set(course.id, course))
     return [...uniqueCourses.values()]
-  }, [initialPath.courses, paths])
+  }, [initialPath])
   const defaultCourseId = courseOptions[0]?.id ?? initialPath.courses[0]?.id ?? 'course-onboarding'
   const [questions, setQuestions] = useState<ManagedQuestion[]>(initialQuestions.map((question) => ({ ...question, courseId: question.courseId || defaultCourseId, status: 'published' })))
   const [selectedCourseId, setSelectedCourseId] = useState('all')

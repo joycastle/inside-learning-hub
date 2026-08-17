@@ -1,16 +1,28 @@
 export const formatDate = (value: string) =>
   new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
     month: 'long',
     day: 'numeric',
   }).format(new Date(value))
 
 export const formatDateTime = (value: string) =>
   new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
+
+export const formatHomeDate = (value = new Date()) =>
+  new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Shanghai',
+    weekday: 'short',
+    month: 'numeric',
+    day: 'numeric',
+  }).format(value).replace(', ', ' · ')
 
 export const formatDuration = (minutes: number) => {
   if (minutes < 60) return `${minutes} 分钟`
