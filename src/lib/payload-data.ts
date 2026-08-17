@@ -94,6 +94,8 @@ interface PayloadQuestion {
   options: Array<{ optionId: string; label: string; correct?: boolean }>
   explanation?: string | null
   difficulty?: QuizQuestion['difficulty']
+  active?: boolean
+  status?: 'draft' | 'published'
 }
 
 const isDocument = (value: unknown): value is { id: PayloadId } => (
@@ -118,6 +120,7 @@ const toUnit = (unit: PayloadUnit, progress?: PayloadProgress): LearningUnit => 
   progress: progress?.progress ?? 0,
   hasQuiz: Boolean(unit.quizRule),
   externalUrl: unit.externalUrl ?? undefined,
+  mediaId: isDocument(unit.media) ? String(unit.media.id) : undefined,
   mediaKey: isDocument(unit.media) ? (unit.media.storageKey ?? undefined) : undefined,
 })
 
@@ -140,6 +143,32 @@ const toCourse = (course: PayloadCourse, progressByUnit: Map<string, PayloadProg
     completedUnits: units.filter((unit) => unit.status === 'completed').length,
     unitCount: units.length,
     units,
+  }
+}
+
+const hydratePathMedia = async (payload: Awaited<ReturnType<typeof payloadClient>>, path: PayloadPath): Promise<PayloadPath> => {
+  const mediaIds = (path.courses ?? []).flatMap((course) => {
+    if (!isDocument(course)) return []
+    return (course.units ?? []).flatMap((unit) => {
+      if (!isDocument(unit) || isDocument(unit.media) || unit.media == null) return []
+      return [relationId(unit.media)]
+    })
+  })
+  if (!mediaIds.length) return path
+  const mediaResult = await payload.find({ collection: 'media', where: { id: { in: mediaIds } }, limit: 1000, overrideAccess: true })
+  const mediaById = new Map((mediaResult.docs as Array<{ id: PayloadId; storageKey?: string | null }>).map((media) => [String(media.id), media]))
+  return {
+    ...path,
+    courses: (path.courses ?? []).map((course) => {
+      if (!isDocument(course)) return course
+      return {
+        ...course,
+        units: (course.units ?? []).map((unit) => {
+          if (!isDocument(unit) || unit.media == null || isDocument(unit.media)) return unit
+          return { ...unit, media: mediaById.get(relationId(unit.media)) ?? unit.media }
+        }),
+      }
+    }),
   }
 }
 
@@ -184,7 +213,7 @@ export async function getLearningPathForUser(user: AppUser): Promise<LearningPat
     enrollment = created as unknown as PayloadEnrollment
   }
 
-  const path = isDocument(enrollment.learningPath) ? enrollment.learningPath as PayloadPath : null
+  const path = isDocument(enrollment.learningPath) ? await hydratePathMedia(payload, enrollment.learningPath as PayloadPath) : null
   if (!path) return null
   const progressResult = await payload.find({
     collection: 'unit-progress',
@@ -222,7 +251,7 @@ export async function getCourseById(courseId: string, user: AppUser): Promise<Co
 export async function getDefaultLearningPath(): Promise<LearningPath | null> {
   const payload = await payloadClient()
   const result = await payload.find({ collection: 'learning-paths', where: { isDefaultOnboarding: { equals: true } }, depth: 3, limit: 1, overrideAccess: true })
-  const path = result.docs[0] as unknown as PayloadPath | undefined
+  const path = result.docs[0] ? await hydratePathMedia(payload, result.docs[0] as unknown as PayloadPath) : undefined
   if (!path) return null
   const courses = (path.courses ?? [])
     .filter((course): course is PayloadCourse => isDocument(course))
@@ -254,18 +283,19 @@ export async function getTrainingRecords(): Promise<TrainingRecord[]> {
   const attempts = await payload.find({ collection: 'quiz-attempts', limit: 1000, overrideAccess: true })
   const progressByKey = new Map<string, { maxProgress?: number }>()
   for (const item of progress.docs as Array<{ user: Relation; unit: Relation; maxProgress?: number }>) progressByKey.set(`${relationId(item.user)}:${relationId(item.unit)}`, item)
-  return (enrollments.docs as Array<{ user: Relation<{ id: PayloadId; name?: string; department?: Relation<{ id: PayloadId; name?: string }> }>; learningPath: Relation<PayloadPath>; assignedAt: string; dueAt: string; status?: LearningUnit['status']; completedAt?: string }>).flatMap((enrollment) => {
+  return (enrollments.docs as Array<{ user: Relation<{ id: PayloadId; name?: string; feishuOpenId?: string | null; department?: Relation<{ id: PayloadId; name?: string }> }>; learningPath: Relation<PayloadPath>; assignedAt: string; dueAt: string; status?: LearningUnit['status']; completedAt?: string }>).flatMap((enrollment) => {
     const path = isDocument(enrollment.learningPath) ? enrollment.learningPath as PayloadPath : null
     const user = isDocument(enrollment.user) ? enrollment.user : null
-    const course = path?.courses?.find(isDocument) as PayloadCourse | undefined
-    if (!path || !user || !course) return []
-    const units = (course.units ?? []).filter((unit): unit is PayloadUnit => isDocument(unit))
-    const progressValues = units.map((unit) => progressByKey.get(`${user.id}:${unit.id}`)?.maxProgress ?? 0)
-    const videoProgress = progressValues.length ? Math.max(...progressValues) : 0
-    const userAttempts = (attempts.docs as Array<{ user: Relation; unit: Relation; score?: number; submittedAt?: string }>).filter((attempt) => relationId(attempt.user) === String(user.id) && units.some((unit) => relationId(attempt.unit) === String(unit.id)) && attempt.submittedAt)
-    const scores = userAttempts.map((attempt) => attempt.score).filter((score): score is number => typeof score === 'number')
+    if (!path || !user) return []
     const department = isDocument(user.department) ? user.department.name : '待同步部门'
-    return [{ userId: String(user.id), userName: user.name ?? '未命名员工', departmentName: department ?? '待同步部门', pathTitle: path.title, courseTitle: course.title, assignedAt: enrollment.assignedAt, dueAt: enrollment.dueAt, status: enrollment.status ?? 'notStarted', completedAt: enrollment.completedAt, videoProgress, bestScore: scores.length ? Math.max(...scores) : undefined, attempts: userAttempts.length }]
+    return (path.courses ?? []).filter((course): course is PayloadCourse => isDocument(course)).map((course) => {
+      const units = (course.units ?? []).filter((unit): unit is PayloadUnit => isDocument(unit))
+      const progressValues = units.map((unit) => progressByKey.get(`${user.id}:${unit.id}`)?.maxProgress ?? 0)
+      const videoProgress = progressValues.length ? Math.max(...progressValues) : 0
+      const userAttempts = (attempts.docs as Array<{ user: Relation; unit: Relation; score?: number; submittedAt?: string }>).filter((attempt) => relationId(attempt.user) === String(user.id) && units.some((unit) => relationId(attempt.unit) === String(unit.id)) && attempt.submittedAt)
+      const scores = userAttempts.map((attempt) => attempt.score).filter((score): score is number => typeof score === 'number')
+      return { userId: user.feishuOpenId ?? String(user.id), courseId: String(course.id), userName: user.name ?? '未命名员工', departmentName: department ?? '待同步部门', pathTitle: path.title, courseTitle: course.title, assignedAt: enrollment.assignedAt, dueAt: enrollment.dueAt, status: enrollment.status ?? 'notStarted', completedAt: enrollment.completedAt, videoProgress, bestScore: scores.length ? Math.max(...scores) : undefined, attempts: userAttempts.length }
+    })
   })
 }
 
@@ -296,7 +326,7 @@ export async function getVideoAnalytics(): Promise<VideoAnalytics[]> {
       label: ['0–10%', '10–25%', '25–50%', '50–75%', '75–90%', '90–100%'][index],
       value: unitProgress.filter((item) => {
         const value = item.maxProgress ?? 0
-        return index === 0 ? value >= min && value <= max : value > min && value < max
+        return value >= min && value < max
       }).length,
     }))
     return {
@@ -326,6 +356,7 @@ export async function getServiceArticles(): Promise<ServiceArticle[]> {
       type: article.type ?? 'article',
       updatedAt: article.updatedAt,
       url: article.externalUrl ?? undefined,
+      mediaId: isDocument(article.media) ? String(article.media.id) : undefined,
       mediaKey: isDocument(article.media) ? (article.media.storageKey ?? undefined) : undefined,
       tags: (article.tags ?? []).map((tag) => tag.label),
       source: article.source ?? undefined,
@@ -364,10 +395,17 @@ export async function getAnnouncementsForUser(user: AppUser): Promise<Announceme
 export async function getQuestionsForUnit(unitId: string): Promise<QuizQuestion[]> {
   const payload = await payloadClient()
   const unitResult = await payload.findByID({ collection: 'units', id: unitId, depth: 1, overrideAccess: true })
-  const quizRule = unitResult.quizRule
-  const rule = isDocument(quizRule) ? quizRule as { id: PayloadId; questionCount?: number } : null
+  const quizRule = unitResult.quizRule as { id?: PayloadId; questionCount?: number; categories?: Relation[] } | null | undefined
+  const rule = isDocument(quizRule) ? quizRule as { id: PayloadId; questionCount?: number; categories?: Relation[] } : null
   const count = Number(rule?.questionCount ?? 3)
-  const result = await payload.find({ collection: 'questions', where: { course: { equals: relationId(unitResult.course) } }, limit: 1000, depth: 1, overrideAccess: true })
+  const categoryIds = (rule?.categories ?? []).map((category) => relationId(category)).filter(Boolean)
+  const where = [
+    { course: { equals: relationId(unitResult.course) } },
+    { status: { equals: 'published' } },
+    { active: { equals: true } },
+    ...(categoryIds.length ? [{ category: { in: categoryIds } }] : []),
+  ]
+  const result = await payload.find({ collection: 'questions', where: { and: where }, limit: 1000, depth: 1, overrideAccess: true })
   const questions = (result.docs as unknown as PayloadQuestion[]).map((question) => ({
     id: String(question.id),
     courseId: relationId(question.course),

@@ -11,6 +11,9 @@ interface FeishuEventPayload {
 export async function POST(request: Request) {
   const payload = (await request.json()) as FeishuEventPayload
   const verificationToken = process.env.FEISHU_VERIFICATION_TOKEN
+  if (process.env.DEMO_MODE === 'false' && !verificationToken) {
+    return NextResponse.json({ message: '飞书事件校验未配置' }, { status: 503 })
+  }
   if (verificationToken && (payload.header?.token ?? payload.token) !== verificationToken) {
     return NextResponse.json({ message: '无效的飞书事件凭证' }, { status: 401 })
   }

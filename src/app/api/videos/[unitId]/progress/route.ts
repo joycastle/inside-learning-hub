@@ -38,7 +38,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ unit
       updatedAt: new Date().toISOString(),
       completedAt: existing.completedAt,
     } : undefined
-    const update = computeVideoProgressUpdate(user.id, unitId, parsed.data, current)
+    const serverProgress = Math.min(100, Math.round((parsed.data.currentSeconds / parsed.data.durationSeconds) * 100))
+    const update = computeVideoProgressUpdate(user.id, unitId, { ...parsed.data, progress: serverProgress }, current)
     if (!update.duplicate) {
       const data = {
         user: payloadUserId,
@@ -66,7 +67,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ unit
 
   const key = getVideoProgressKey(user, unitId)
   const current = demoVideoProgress.get(key)
-  const update = computeVideoProgressUpdate(user.id, unitId, parsed.data, current)
+  const serverProgress = Math.min(100, Math.round((parsed.data.currentSeconds / parsed.data.durationSeconds) * 100))
+  const update = computeVideoProgressUpdate(user.id, unitId, { ...parsed.data, progress: serverProgress }, current)
   if (!update.duplicate) demoVideoProgress.set(key, update.state)
   return NextResponse.json({ ...update.state, completed: update.state.maxProgress >= 90, duplicate: update.duplicate })
 }

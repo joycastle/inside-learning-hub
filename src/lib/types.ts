@@ -13,7 +13,7 @@ export interface AppUser {
   joinedAt: string
 }
 
-export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video'
+export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video' | 'html'
 export type LearningStatus = 'notStarted' | 'inProgress' | 'completed' | 'overdue'
 
 export interface LearningUnit {
@@ -30,6 +30,7 @@ export interface LearningUnit {
   content?: string[]
   externalUrl?: string
   videoUrl?: string
+  mediaId?: string
   mediaKey?: string
 }
 
@@ -107,6 +108,7 @@ export interface ServiceArticle {
   type: 'article' | 'pdf' | 'feishuDoc' | 'externalLink'
   updatedAt: string
   url?: string
+  mediaId?: string
   mediaKey?: string
   tags: string[]
   source?: string
@@ -129,6 +131,7 @@ export interface Announcement {
 
 export interface TrainingRecord {
   userId: string
+  courseId?: string
   userName: string
   departmentName: string
   pathTitle: string

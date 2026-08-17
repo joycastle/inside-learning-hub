@@ -9,7 +9,22 @@ export default async function LearnPage() {
   const user = await requireUser()
   const path = process.env.DEMO_MODE === 'false' ? await getLearningPathForUser(user) : onboardingPath
   const onboardingCourse = path?.courses[0]
-  if (!onboardingCourse) return null
+  if (!onboardingCourse) {
+    return (
+      <div className="page-container main-content">
+        <header className="learn-header learn-header--single-video">
+          <div>
+            <h1 className="page-heading">新人入职</h1>
+            <p className="page-description">完成分配给你的培训路径，了解公司和第一周需要完成的事项。</p>
+          </div>
+        </header>
+        <section className="surface empty-state" aria-label="暂无培训路径">
+          <h2 className="section-heading">暂未分配培训路径</h2>
+          <p>当前没有可开始的培训内容，请联系管理员为你分配入职培训。</p>
+        </section>
+      </div>
+    )
+  }
   const onboardingVideo = onboardingCourse.units[0]
 
   return (

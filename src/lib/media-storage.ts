@@ -17,6 +17,9 @@ const storageKeyPattern = /^[a-zA-Z0-9/_\-.]+$/
 
 export async function createMediaDownloadUrl(key: string) {
   if (!storageKeyPattern.test(key) || key.includes('..')) throw new Error('媒体资源标识不合法')
+  if (process.env.MINIO_ENABLED !== 'true') {
+    return `${process.env.APP_URL ?? 'http://localhost:3000'}/api/media/file?key=${encodeURIComponent(key)}`
+  }
   return getSignedUrl(
     storageClient,
     new GetObjectCommand({ Bucket: process.env.MINIO_BUCKET ?? 'inside-hub', Key: key }),

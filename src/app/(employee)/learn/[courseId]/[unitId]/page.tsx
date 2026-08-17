@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { QuizPanel } from '@/components/quiz-panel'
 import { CompleteUnitButton } from '@/components/complete-unit-button'
 import { VideoLesson } from '@/components/video-lesson'
+import { DocumentPreview } from '@/components/document-preview'
 import { onboardingPath } from '@/lib/demo-data'
 import { getCourseById } from '@/lib/payload-data'
 import { requireUser } from '@/lib/auth'
@@ -35,7 +36,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
 
       <main className="lesson-main">
         <article className="lesson-content">
-          <div className="lesson-content__meta">入职说明视频</div>
+          <div className="lesson-content__meta">{unit.type === 'video' ? '入职说明视频' : '入职学习单元'}</div>
           <h1>{unit.title}</h1>
           <p className="lesson-content__lead">{unit.description}</p>
 
@@ -53,7 +54,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
                   <h2 id="lesson-handout-title">新人培训手册</h2>
                   <p>HTML 讲义 · 视频配套内容已整理为独立网页，可随时打开阅读。</p>
                 </div>
-                <Link className="button button--secondary" href="/learn/onboarding-handout">
+                <Link className="button button--secondary" href={`/learn/onboarding-handout?courseId=${encodeURIComponent(course.id)}&unitId=${encodeURIComponent(unit.id)}`}>
                   打开讲义<ArrowRight size={16} aria-hidden="true" />
                 </Link>
               </aside>
@@ -77,11 +78,15 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
           ) : null}
 
           {unit.type === 'pdf' ? (
-            <div className="surface empty-state"><h2 className="section-heading">PDF 资料</h2><p>资料通过私有存储加载，访问地址会定时失效。</p>{mediaUrl ? <a className="button button--primary" href={mediaUrl} target="_blank" rel="noreferrer">打开 PDF</a> : null}</div>
+            <div className="surface document-unit"><h2 className="section-heading">PDF 资料</h2><p className="section-description">资料通过私有存储加载，访问地址会定时失效。</p>{mediaUrl ? <DocumentPreview title={unit.title} type="pdf" url={mediaUrl} /> : <div className="empty-state empty-state--compact"><p>当前单元还没有配置 PDF 文件。</p></div>}</div>
+          ) : null}
+
+          {unit.type === 'html' ? (
+            <div className="surface document-unit"><h2 className="section-heading">HTML 讲义</h2><p className="section-description">该文件将在隔离的预览区域中打开，避免影响系统页面。</p>{mediaUrl ? <DocumentPreview title={unit.title} type="html" url={mediaUrl} /> : <div className="empty-state empty-state--compact"><p>当前单元还没有配置 HTML 文件。</p></div>}</div>
           ) : null}
 
           {unit.type !== 'video' && unit.hasQuiz ? (
-            <QuizPanel unitId={unit.id} unlocked={unit.progress >= 90} />
+            <QuizPanel unitId={unit.id} unlocked />
           ) : null}
 
           {unit.type !== 'video' && !unit.hasQuiz ? (

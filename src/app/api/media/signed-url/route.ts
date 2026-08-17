@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const key = new URL(request.url).searchParams.get('key')
   const parsed = querySchema.safeParse(key)
   if (!parsed.success) return NextResponse.json({ message: '缺少媒体资源标识' }, { status: 400 })
-  if (process.env.DEMO_MODE === 'false' && !await canUserAccessMedia(user, parsed.data)) {
+  if (!await canUserAccessMedia(user, parsed.data)) {
     return NextResponse.json({ message: '无权访问该媒体资源' }, { status: 403 })
   }
 

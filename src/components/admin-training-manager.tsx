@@ -1,12 +1,12 @@
 'use client'
 
-import { ArrowRight, Layers3, Plus } from 'lucide-react'
+import { ArrowRight, Layers3, Pencil, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { ProgressBar } from '@/components/progress-bar'
 import { StatusBadge } from '@/components/status-badge'
-import type { Course, LearningPath, UnitType } from '@/lib/types'
+import type { Course, LearningPath, LearningUnit, UnitType } from '@/lib/types'
 
 export interface AdminTrainingManagerProps {
   initialPath: LearningPath
@@ -17,6 +17,7 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
   const [selectedPathId, setSelectedPathId] = useState(initialPath.id)
   const [pathDialogOpen, setPathDialogOpen] = useState(false)
   const [courseDialogOpen, setCourseDialogOpen] = useState(false)
+  const [editingUnit, setEditingUnit] = useState<{ courseId: string; unit: LearningUnit } | null>(null)
   const [feedback, setFeedback] = useState('')
 
   const selectedPath = useMemo(
@@ -63,7 +64,8 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
     const unitType = String(formData.get('unitType') ?? 'video') as UnitType
     const file = formData.get('media')
     const uploadedFile = file instanceof File && file.size > 0 ? file : null
-    if (!title) return
+    if (editingUnit && !unitTitle) { setFeedback('请填写学习单元名称。'); return }
+    if (!editingUnit && !title) return
     let persistedId: string | undefined
     let persistedUnitId: string | undefined
     if (process.env.NODE_ENV !== 'test') {
@@ -73,8 +75,25 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
         uploadForm.set('title', unitTitle || title)
         uploadForm.set('file', uploadedFile)
         const uploadResponse = await fetch('/api/admin/media', { method: 'POST', body: uploadForm })
-        if (!uploadResponse.ok) { setFeedback('文件上传失败，请检查文件格式或存储服务。'); return }
+        if (!uploadResponse.ok) {
+          const result = await uploadResponse.json().catch(() => null) as { message?: string } | null
+          setFeedback(result?.message ?? '文件上传失败，请检查文件格式或存储服务。')
+          return
+        }
         mediaId = String((await uploadResponse.json() as { id: string | number }).id)
+      }
+      if (editingUnit) {
+        const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'unit', unitId: editingUnit.unit.id, title: unitTitle, description: summary, unitType, mediaId: mediaId ?? editingUnit.unit.mediaId }) })
+        if (!response.ok) {
+          const result = await response.json().catch(() => null) as { message?: string } | null
+          setFeedback(result?.message ?? '学习单元保存失败，请稍后重试。')
+          return
+        }
+        setPaths((current) => current.map((path) => path.id === selectedPath.id ? { ...path, courses: path.courses.map((course) => course.id === editingUnit.courseId ? { ...course, units: course.units.map((unit) => unit.id === editingUnit.unit.id ? { ...unit, title: unitTitle, description: summary, type: unitType, mediaId: mediaId ?? unit.mediaId } : unit) } : course) } : path))
+        setCourseDialogOpen(false)
+        setEditingUnit(null)
+        setFeedback(`已更新学习单元“${unitTitle}”`)
+        return
       }
       const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'course', pathId: selectedPath.id, title, summary, category, unitTitle: unitTitle || undefined, unitType, mediaId }) })
       if (!response.ok) { setFeedback('课程保存失败，请稍后重试。'); return }
@@ -162,7 +181,10 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
               </div>
               <span className="text-muted text-small">{course.unitCount} 个单元</span>
               <div className="management-row__progress"><ProgressBar value={course.progress} label={`${course.title}完成率`} /><span className="tabular">{course.progress}%</span></div>
-              {course.id === initialPath.courses[0]?.id ? <Link className="table-action" href={`/learn/${course.id}`}>预览<ArrowRight size={14} aria-hidden="true" /></Link> : <span className="draft-state">草稿</span>}
+              <div className="management-row__actions">
+                {course.units[0] ? <button className="table-action" type="button" onClick={() => { setEditingUnit({ courseId: course.id, unit: course.units[0] }); setCourseDialogOpen(true) }}><Pencil size={14} aria-hidden="true" />编辑内容</button> : null}
+                {course.id === initialPath.courses[0]?.id ? <Link className="table-action" href={`/learn/${course.id}`}>预览<ArrowRight size={14} aria-hidden="true" /></Link> : <span className="draft-state">草稿</span>}
+              </div>
             </div>
           )) : <div className="empty-state empty-state--compact"><p>当前路径还没有课程，请先添加课程。</p></div>}
         </div>
@@ -184,20 +206,20 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
 
       <AdminDialog
         open={courseDialogOpen}
-        title="添加课程"
-        description={`添加到“${selectedPath.title}”，可同时建立第一个学习单元。`}
-        onClose={() => setCourseDialogOpen(false)}
-        footer={<><button className="button button--quiet" type="button" onClick={() => setCourseDialogOpen(false)}>取消</button><button className="button button--primary" type="submit" form="create-course-form">添加课程</button></>}
+        title={editingUnit ? '编辑学习单元' : '添加课程'}
+        description={editingUnit ? '可以修改标题、说明、类型并替换视频或文档。' : `添加到“${selectedPath.title}”，可同时建立第一个学习单元。`}
+        onClose={() => { setCourseDialogOpen(false); setEditingUnit(null) }}
+        footer={<><button className="button button--quiet" type="button" onClick={() => { setCourseDialogOpen(false); setEditingUnit(null) }}>取消</button><button className="button button--primary" type="submit" form="create-course-form">{editingUnit ? '保存修改' : '添加课程'}</button></>}
       >
         <form className="admin-form" id="create-course-form" action={createCourse}>
-          <label><span>课程名称</span><input className="form-control" name="title" required placeholder="例如：新人入职说明" /></label>
-          <label><span>课程说明</span><textarea className="form-control" name="summary" rows={3} placeholder="简要说明课程内容" /></label>
-          <label><span>课程分类</span><input className="form-control" name="category" defaultValue="新员工必看" /></label>
+          {!editingUnit ? <label><span>课程名称</span><input className="form-control" name="title" required placeholder="例如：新人入职说明" /></label> : null}
+          <label><span>{editingUnit ? '单元说明' : '课程说明'}</span><textarea className="form-control" name="summary" defaultValue={editingUnit?.unit.description ?? ''} rows={3} placeholder="简要说明课程内容" /></label>
+          {!editingUnit ? <label><span>课程分类</span><input className="form-control" name="category" defaultValue="新员工必看" /></label> : null}
           <div className="admin-form__grid">
-            <label><span>第一个单元（可选）</span><input className="form-control" name="unitTitle" placeholder="例如：入职介绍视频" /></label>
-            <label><span>单元类型</span><select className="form-control" name="unitType" defaultValue="video"><option value="video">视频</option><option value="article">图文</option><option value="pdf">PDF</option><option value="feishuDoc">飞书文档</option></select></label>
+            <label><span>{editingUnit ? '单元名称' : '第一个单元（可选）'}</span><input className="form-control" name="unitTitle" defaultValue={editingUnit?.unit.title ?? ''} placeholder="例如：入职介绍视频" /></label>
+            <label><span>单元类型</span><select className="form-control" name="unitType" defaultValue={editingUnit?.unit.type ?? 'video'}><option value="video">视频</option><option value="article">图文</option><option value="pdf">PDF</option><option value="html">HTML 讲义</option><option value="feishuDoc">飞书文档</option></select></label>
           </div>
-          <label><span>单元资源（可选）</span><input className="form-control" name="media" type="file" accept="video/mp4,application/pdf,image/png,image/jpeg,image/webp" /></label>
+          <label><span>{editingUnit?.unit.mediaId ? '替换单元资源（可选）' : '单元资源（可选）'}</span><input className="form-control" name="media" type="file" accept="text/html,.html,video/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/webp" />{editingUnit?.unit.mediaId ? <small>不选择文件则保留当前资源；HTML 文件将在隔离预览中打开。</small> : null}</label>
         </form>
       </AdminDialog>
     </>

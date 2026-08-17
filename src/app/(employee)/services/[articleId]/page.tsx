@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/format'
 import { getServiceArticles } from '@/lib/payload-data'
 import { createMediaDownloadUrl } from '@/lib/media-storage'
 import { requireUser } from '@/lib/auth'
+import { DocumentPreview } from '@/components/document-preview'
 
 export default async function ServiceArticlePage({ params }: { params: Promise<{ articleId: string }> }) {
   const { articleId } = await params
@@ -22,6 +23,7 @@ export default async function ServiceArticlePage({ params }: { params: Promise<{
         <div className="lesson-content__meta">{article.category} · 更新于 {formatDate(article.updatedAt)}</div>
         <h1 className="page-heading">{article.title}</h1>
         <p className="page-description">{article.summary}</p>
+        {article.type === 'pdf' && mediaUrl ? <DocumentPreview title={article.title} type="pdf" url={mediaUrl} /> : null}
         <div className="article-body service-article__body">
           {article.source ? <aside className="service-source-note"><strong>制度来源</strong><span>{article.source}</span></aside> : null}
           {article.sections?.map((section) => (

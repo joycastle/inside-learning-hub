@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { requireAdmin } from '@/lib/auth'
 import { payloadClient } from '@/lib/payload-data'
 
-const schema = z.object({ userIds: z.array(z.string()).min(1), dueAt: z.string().min(1), pathId: z.string().optional() })
+const schema = z.object({ userIds: z.array(z.string()).min(1), dueAt: z.string().datetime({ offset: true }), pathId: z.string().optional() })
 
 export async function POST(request: Request) {
   await requireAdmin()

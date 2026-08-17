@@ -1054,7 +1054,7 @@ MINIO_BUCKET=inside-hub
 | `FEISHU_ALLOWED_TENANT_KEYS` | 生产必需 | 空 | 逗号分隔允许租户 |
 | `FEISHU_VERIFICATION_TOKEN` | 生产必需 | 空 | 飞书事件 Token |
 | `BOOTSTRAP_ADMIN_OPEN_IDS` | 首次上线 | 空 | 逗号分隔首批超级管理员 Open ID |
-| `MINIO_ENABLED` | 使用私有媒体时 | `false` | Compose 中覆盖为 true |
+| `MINIO_ENABLED` | 私有媒体存储 | `true` | 本地与线上统一使用 MinIO；仅开发排障时才关闭 |
 | `MINIO_ENDPOINT` | 使用 MinIO 时 | `http://localhost:9000` | 服务端访问地址 |
 | `MINIO_REGION` | 使用 MinIO 时 | `us-east-1` | S3 区域 |
 | `MINIO_ACCESS_KEY` | 使用 MinIO 时 | 开发默认 | 生产必须替换 |

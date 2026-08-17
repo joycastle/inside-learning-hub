@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
+import { AlertCircle, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
 import type { QuizAttemptQuestion, QuizAttemptResult } from '@/lib/types'
 
 interface QuizAttemptPayload {
@@ -77,7 +77,7 @@ export function QuizPanel({ unitId, unlocked }: { unitId: string; unlocked: bool
     return (
       <section className="surface empty-state" aria-labelledby="quiz-locked-title">
         <h2 className="section-heading" id="quiz-locked-title">单元测评尚未解锁</h2>
-        <p>视频观看达到 90% 后，系统会从题库随机抽取题目。</p>
+        <p>完成本单元后，系统会从题库随机抽取题目。</p>
       </section>
     )
   }
@@ -98,7 +98,7 @@ export function QuizPanel({ unitId, unlocked }: { unitId: string; unlocked: bool
   if (result) {
     return (
       <section className="surface quiz-shell quiz-result" aria-live="polite">
-        <CheckCircle2 size={30} strokeWidth={1.6} aria-hidden="true" />
+        {result.passed ? <CheckCircle2 size={30} strokeWidth={1.6} aria-hidden="true" /> : <AlertCircle size={30} strokeWidth={1.6} aria-hidden="true" />}
         <h2 className="section-heading">{result.passed ? '测评通过' : '继续巩固一下'}</h2>
         <div className="quiz-result__score tabular">{result.score}</div>
         <p className="text-muted">答对 {result.correctCount} / {result.totalCount} 道题</p>

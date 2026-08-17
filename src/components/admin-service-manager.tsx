@@ -17,7 +17,7 @@ export interface AdminServiceManagerProps {
 }
 
 export function AdminServiceManager({ initialArticles }: AdminServiceManagerProps) {
-  const [articles, setArticles] = useState<ManagedServiceArticle[]>(initialArticles.map((article) => ({ ...article, creationMode: 'page', status: 'published' })))
+  const [articles, setArticles] = useState<ManagedServiceArticle[]>(initialArticles.map((article) => ({ ...article, creationMode: article.mediaId || article.type === 'pdf' ? 'upload' : 'page', status: 'published' })))
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingArticle, setEditingArticle] = useState<ManagedServiceArticle | null>(null)
   const [creationMode, setCreationMode] = useState<'page' | 'upload'>('page')
@@ -41,7 +41,7 @@ export function AdminServiceManager({ initialArticles }: AdminServiceManagerProp
       setFeedback('页面新建需要填写正文内容。')
       return
     }
-    if (creationMode === 'upload' && !uploadedFile) {
+    if (creationMode === 'upload' && !uploadedFile && !editingArticle?.mediaId) {
       setFeedback('请选择 PDF、DOC 或 DOCX 文档。')
       return
     }
@@ -59,6 +59,7 @@ export function AdminServiceManager({ initialArticles }: AdminServiceManagerProp
       sections: creationMode === 'page' ? [{ title: '正文', paragraphs: content.split(/\n+/).filter(Boolean) }] : undefined,
       creationMode,
       fileName: uploadedFile?.name,
+      mediaId: uploadedFile ? undefined : editingArticle?.mediaId,
       status,
     }
     let mediaId: string | undefined
@@ -67,10 +68,16 @@ export function AdminServiceManager({ initialArticles }: AdminServiceManagerProp
       uploadForm.set('title', title)
       uploadForm.set('file', uploadedFile)
       const uploadResponse = await fetch('/api/admin/media', { method: 'POST', body: uploadForm })
-      if (!uploadResponse.ok) { setFeedback('文件上传失败，请检查文件格式或存储服务。'); return }
+      if (!uploadResponse.ok) {
+        const result = await uploadResponse.json().catch(() => null) as { message?: string } | null
+        setFeedback(result?.message ?? '文件上传失败，请检查文件格式或存储服务。')
+        return
+      }
       mediaId = String((await uploadResponse.json() as { id: string | number }).id)
+      nextArticle.mediaId = mediaId
+      nextArticle.fileName = uploadedFile.name
     }
-    const response = await fetch('/api/admin/services', { method: editingArticle ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingArticle?.id, title, summary, category, tags, status, type: nextArticle.type, bodyText: content, source: nextArticle.source, fileName: nextArticle.fileName, mediaId }) })
+    const response = await fetch('/api/admin/services', { method: editingArticle ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editingArticle?.id, title, summary, category, tags, status, type: nextArticle.type, bodyText: content, source: nextArticle.source, fileName: nextArticle.fileName, mediaId: mediaId ?? editingArticle?.mediaId }) })
     if (!response.ok) { setFeedback('员工服务内容保存失败，请稍后重试。'); return }
     setArticles((current) => editingArticle ? current.map((article) => article.id === editingArticle.id ? nextArticle : article) : [nextArticle, ...current])
     setDialogOpen(false)
@@ -102,7 +109,7 @@ export function AdminServiceManager({ initialArticles }: AdminServiceManagerProp
                   <td>{article.tags.slice(0, 2).join('、') || '—'}</td>
                   <td className="tabular">{formatDate(article.updatedAt)}</td>
                   <td><span className={article.status === 'published' ? 'publish-state' : 'draft-state'}>{article.status === 'published' ? '已发布' : '草稿'}</span></td>
-                  <td><button className="table-button" type="button" aria-label={`编辑${article.title}`} onClick={() => { setEditingArticle(article); setCreationMode(article.type === 'pdf' ? 'upload' : 'page'); setDialogOpen(true) }}><ArrowUpRight size={15} aria-hidden="true" /></button></td>
+                  <td><button className="table-button" type="button" aria-label={`编辑${article.title}`} onClick={() => { setEditingArticle(article); setCreationMode(article.mediaId || article.type === 'pdf' ? 'upload' : 'page'); setDialogOpen(true) }}><ArrowUpRight size={15} aria-hidden="true" /></button></td>
                 </tr>
               ))}
             </tbody>
@@ -123,7 +130,7 @@ export function AdminServiceManager({ initialArticles }: AdminServiceManagerProp
           <label><span>标题</span><input className="form-control" name="title" defaultValue={editingArticle?.title ?? ''} placeholder="例如：补充医疗保险申请指引" /></label>
           <label><span>摘要</span><textarea className="form-control" name="summary" defaultValue={editingArticle?.summary ?? ''} rows={2} placeholder="一句话说明内容适用范围" /></label>
           <label><span>标签</span><input className="form-control" name="tags" defaultValue={editingArticle?.tags.join('、') ?? ''} placeholder="使用逗号分隔，例如：保险，报销" /></label>
-          {creationMode === 'page' ? <label><span>页面正文</span><textarea className="form-control" name="content" defaultValue={editingArticle?.sections?.flatMap((section) => section.paragraphs ?? []).join('\n') ?? ''} rows={7} placeholder="输入制度说明、办理步骤和注意事项" /></label> : <label className="document-upload-field"><FileText size={22} aria-hidden="true" /><span><strong>选择制度文档</strong><small>文件会在正式环境上传至私有存储；当前原型保存文件名称与内容记录。</small></span><input name="document" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></label>}
+          {creationMode === 'page' ? <label><span>页面正文</span><textarea className="form-control" name="content" defaultValue={editingArticle?.sections?.flatMap((section) => section.paragraphs ?? []).join('\n') ?? ''} rows={7} placeholder="输入制度说明、办理步骤和注意事项" /></label> : <label className="document-upload-field"><FileText size={22} aria-hidden="true" /><span><strong>{editingArticle?.mediaId ? '替换制度文档（可选）' : '选择制度文档'}</strong><small>{editingArticle?.mediaId ? '不选择文件则保留当前文档；选择新文件后会替换当前关联。' : '文件会保存到当前配置的存储服务。'}</small></span><input name="document" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></label>}
           <div className="admin-dialog__footer admin-dialog__footer--inline"><button className="button button--quiet" type="button" onClick={() => setDialogOpen(false)}>取消</button><button className="button button--primary" type="submit">保存内容</button></div>
         </form>
       </AdminDialog>

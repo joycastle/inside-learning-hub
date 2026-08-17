@@ -15,6 +15,8 @@ export default async function HomePage() {
   const announcements = process.env.DEMO_MODE === 'false' ? await getAnnouncementsForUser(user) : []
   const onboardingCourse = path?.courses[0]
   const onboardingVideo = onboardingCourse?.units[0]
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Shanghai', hour: 'numeric', hour12: false }).format(new Date()))
+  const greeting = hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'
 
   return (
     <>
@@ -32,7 +34,7 @@ export default async function HomePage() {
 
         <header className="home-welcome">
           <div>
-            <h1 className="page-heading">早上好，{user.name}</h1>
+            <h1 className="page-heading">{greeting}，{user.name}</h1>
             <p className="page-description">{onboardingVideo?.progress ? '从上次位置继续学习即可。' : '从新人入职说明开始，完成你的第一项培训。'}</p>
           </div>
           <span className="home-welcome__date">{formatHomeDate()}</span>

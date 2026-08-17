@@ -19,6 +19,7 @@ export function VideoPlayer({ unitId, source, initialProgress, onUnlocked }: Vid
   const sequenceRef = useRef(0)
   const lastReportedAtRef = useRef(0)
   const [progress, setProgress] = useState(initialProgress)
+  const [mediaError, setMediaError] = useState(false)
   const completed = progress >= 90
 
   const reportProgress = useCallback(
@@ -79,6 +80,17 @@ export function VideoPlayer({ unitId, source, initialProgress, onUnlocked }: Vid
     )
   }
 
+  if (mediaError) {
+    return (
+      <div className="surface empty-state" role="alert">
+        <PlayCircle size={32} strokeWidth={1.5} aria-hidden="true" />
+        <h2 className="section-heading">视频暂时无法播放</h2>
+        <p>视频文件加载失败，请刷新页面重试；如果问题持续，请联系管理员。</p>
+        <button className="button button--secondary" type="button" onClick={() => setMediaError(false)}>重试</button>
+      </div>
+    )
+  }
+
   return (
     <div className="video-shell">
       <video
@@ -90,6 +102,7 @@ export function VideoPlayer({ unitId, source, initialProgress, onUnlocked }: Vid
         onTimeUpdate={() => void reportProgress(false)}
         onPause={() => void reportProgress(true)}
         onEnded={() => void reportProgress(true)}
+        onError={() => setMediaError(true)}
       >
         当前浏览器不支持视频播放。
       </video>

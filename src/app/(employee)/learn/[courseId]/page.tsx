@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, FileText, Film, Link2 } from 'lucide-react'
+import { ArrowRight, BookOpen, FileCode2, FileText, Film, Link2 } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ProgressBar } from '@/components/progress-bar'
@@ -13,6 +13,7 @@ const unitIcons: Record<UnitType, typeof Film> = {
   article: BookOpen,
   pdf: FileText,
   feishuDoc: Link2,
+  html: FileCode2,
 }
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -32,12 +33,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
           <p className="page-description">{course.summary}</p>
           <div className="course-detail-meta">
             <span>{course.category}</span>
-            <span>{course.unitCount} 个视频</span>
+            <span>{course.unitCount} 个学习单元</span>
           </div>
         </div>
         <div>
           <div className="learning-spread__progress-row">
-            <span>观看进度</span><strong className="tabular">{course.progress}%</strong>
+            <span>学习进度</span><strong className="tabular">{course.progress}%</strong>
           </div>
           <ProgressBar value={course.progress} label={`${course.title}进度`} />
         </div>
@@ -45,7 +46,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
       {course.units.length ? (
         <section aria-labelledby="course-outline">
-          <h2 className="section-heading" id="course-outline">入职视频</h2>
+          <h2 className="section-heading" id="course-outline">课程内容</h2>
           <div className="unit-table unit-table--spaced">
             {course.units.map((unit) => {
               const Icon = unitIcons[unit.type]
@@ -63,8 +64,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
         </section>
       ) : (
         <section className="surface empty-state">
-          <h2 className="section-heading">视频准备中</h2>
-          <p>入职视频发布后会显示在这里。</p>
+          <h2 className="section-heading">课程内容准备中</h2>
+          <p>学习单元发布后会显示在这里。</p>
         </section>
       )}
     </div>

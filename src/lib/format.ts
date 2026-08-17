@@ -17,12 +17,12 @@ export const formatDateTime = (value: string) =>
   }).format(new Date(value))
 
 export const formatHomeDate = (value = new Date()) =>
-  new Intl.DateTimeFormat('en-US', {
+  new Intl.DateTimeFormat('zh-CN', {
     timeZone: 'Asia/Shanghai',
     weekday: 'short',
     month: 'numeric',
     day: 'numeric',
-  }).format(value).replace(', ', ' · ')
+  }).format(value).replace(' ', ' · ')
 
 export const formatDuration = (minutes: number) => {
   if (minutes < 60) return `${minutes} 分钟`

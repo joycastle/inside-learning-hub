@@ -9,6 +9,18 @@ const adminOnly: Access = ({ req }) => {
 
 const superAdminOnly: Access = ({ req }) => (req.user as PayloadUser | null)?.role === 'superAdmin'
 const superAdminFieldOnly: FieldAccess = ({ req }) => (req.user as PayloadUser | null)?.role === 'superAdmin'
+const adminFieldOnly: FieldAccess = ({ req }) => {
+  const role = (req.user as PayloadUser | null)?.role
+  return role === 'admin' || role === 'superAdmin'
+}
+const ownsUserRelation: Access = ({ req, data }) => {
+  const user = req.user as PayloadUser | null
+  if (!user) return false
+  if (user.role === 'admin' || user.role === 'superAdmin') return true
+  const value = (data as { user?: string | number | { id: string | number } } | undefined)?.user
+  const id = typeof value === 'object' && value !== null ? value.id : value
+  return id !== undefined && String(id) === String(user.id)
+}
 
 const adminOrSelf: Access = ({ req }) => {
   const user = req.user as PayloadUser | null
@@ -30,13 +42,13 @@ export const Users: CollectionConfig = {
     { name: 'name', type: 'text', required: true },
     { name: 'englishName', type: 'text' },
     { name: 'avatarUrl', type: 'text' },
-    { name: 'feishuOpenId', type: 'text', unique: true, index: true },
-    { name: 'tenantKey', type: 'text', index: true },
-    { name: 'department', type: 'relationship', relationTo: 'departments' },
+    { name: 'feishuOpenId', type: 'text', unique: true, index: true, access: { update: superAdminFieldOnly } },
+    { name: 'tenantKey', type: 'text', index: true, access: { update: superAdminFieldOnly } },
+    { name: 'department', type: 'relationship', relationTo: 'departments', access: { update: adminFieldOnly } },
     { name: 'role', type: 'select', required: true, defaultValue: 'employee', options: ['employee', 'admin', 'superAdmin'], access: { update: superAdminFieldOnly } },
-    { name: 'active', type: 'checkbox', defaultValue: true, required: true },
+    { name: 'active', type: 'checkbox', defaultValue: true, required: true, access: { update: adminFieldOnly } },
     { name: 'joinedAt', type: 'date' },
-    { name: 'lastSyncedAt', type: 'date' },
+    { name: 'lastSyncedAt', type: 'date', access: { update: superAdminFieldOnly } },
   ],
 }
 
@@ -55,7 +67,7 @@ export const Departments: CollectionConfig = {
 export const Media: CollectionConfig = {
   slug: 'media',
   access: { read: adminOnly, create: adminOnly, update: adminOnly, delete: adminOnly },
-  upload: { mimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'video/mp4', 'image/*'], staticDir: 'media' },
+  upload: { mimeTypes: ['text/html', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'video/mp4', 'image/*'], staticDir: 'media' },
   fields: [
     { name: 'title', type: 'text', required: true },
     { name: 'storageKey', type: 'text', unique: true, index: true },
@@ -106,7 +118,7 @@ export const Units: CollectionConfig = {
     { name: 'course', type: 'relationship', relationTo: 'courses', required: true, index: true },
     { name: 'order', type: 'number', min: 0, defaultValue: 0 },
     { name: 'description', type: 'textarea', required: true },
-    { name: 'type', type: 'select', required: true, options: ['article', 'pdf', 'feishuDoc', 'video'] },
+    { name: 'type', type: 'select', required: true, options: ['article', 'pdf', 'feishuDoc', 'video', 'html'] },
     { name: 'durationMinutes', type: 'number', min: 0 },
     { name: 'body', type: 'richText' },
     { name: 'media', type: 'relationship', relationTo: 'media' },
@@ -168,7 +180,7 @@ export const Enrollments: CollectionConfig = {
 
 export const UnitProgress: CollectionConfig = {
   slug: 'unit-progress',
-  access: { read: adminOnly, create: ({ req }) => Boolean(req.user), update: ({ req }) => Boolean(req.user), delete: adminOnly },
+  access: { read: adminOnly, create: ownsUserRelation, update: ownsUserRelation, delete: adminOnly },
   fields: [
     { name: 'user', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'unit', type: 'relationship', relationTo: 'units', required: true, index: true },
@@ -181,7 +193,7 @@ export const UnitProgress: CollectionConfig = {
 
 export const VideoProgress: CollectionConfig = {
   slug: 'video-progress',
-  access: { read: adminOnly, create: ({ req }) => Boolean(req.user), update: ({ req }) => Boolean(req.user), delete: adminOnly },
+  access: { read: adminOnly, create: ownsUserRelation, update: ownsUserRelation, delete: adminOnly },
   fields: [
     { name: 'user', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'unit', type: 'relationship', relationTo: 'units', required: true, index: true },
@@ -200,7 +212,7 @@ export const VideoProgress: CollectionConfig = {
 export const VideoPlaybackSessions: CollectionConfig = {
   slug: 'video-playback-sessions',
   admin: { hidden: true },
-  access: { read: adminOnly, create: ({ req }) => Boolean(req.user), update: ({ req }) => Boolean(req.user), delete: adminOnly },
+  access: { read: adminOnly, create: ownsUserRelation, update: ownsUserRelation, delete: adminOnly },
   fields: [
     { name: 'user', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'unit', type: 'relationship', relationTo: 'units', required: true, index: true },
@@ -212,7 +224,7 @@ export const VideoPlaybackSessions: CollectionConfig = {
 
 export const QuizAttempts: CollectionConfig = {
   slug: 'quiz-attempts',
-  access: { read: adminOnly, create: ({ req }) => Boolean(req.user), update: ({ req }) => Boolean(req.user), delete: adminOnly },
+  access: { read: adminOnly, create: ownsUserRelation, update: ownsUserRelation, delete: adminOnly },
   fields: [
     { name: 'user', type: 'relationship', relationTo: 'users', required: true, index: true },
     { name: 'unit', type: 'relationship', relationTo: 'units', required: true, index: true },

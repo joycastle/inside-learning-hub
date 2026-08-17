@@ -86,9 +86,15 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
     if (!adjustRecord) return
     const dueAt = String(formData.get('dueAt') ?? adjustRecord.dueAt)
     const courseTitle = String(formData.get('courseTitle') ?? adjustRecord.courseTitle)
+    const departmentId = String(formData.get('departmentId') ?? '')
+    const selectedDepartment = organization.departments.find((item) => item.id === departmentId)
+    if (selectedDepartment) {
+      const departmentResponse = await fetch('/api/admin/users/department', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ openId: adjustRecord.userId, departmentId: selectedDepartment.id, departmentName: selectedDepartment.name }) })
+      if (!departmentResponse.ok) { setFeedback('部门保存失败，请确认员工已完成飞书同步。'); return }
+    }
     const response = await fetch('/api/admin/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userIds: [adjustRecord.userId], dueAt }) })
     if (!response.ok) { setFeedback('培训调整保存失败，请稍后重试。'); return }
-    setRecords((current) => current.map((record) => record.userId === adjustRecord.userId ? { ...record, dueAt, courseTitle } : record))
+    setRecords((current) => current.map((record) => record.userId === adjustRecord.userId ? { ...record, dueAt, courseTitle, departmentName: selectedDepartment?.name ?? record.departmentName } : record))
     setAdjustRecord(null)
     setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
   }
@@ -167,6 +173,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       >
         {adjustRecord ? <form className="admin-form" id="adjust-training-form" action={adjustAssignment}>
           <div className="selected-person"><strong>{adjustRecord.userName}</strong><span>{adjustRecord.departmentName} · {adjustRecord.pathTitle}</span></div>
+          <label><span>所属部门</span><select className="form-control" name="departmentId" defaultValue={organization.departments.find((item) => item.name === adjustRecord.departmentName)?.id ?? ''}><option value="">保持当前部门</option>{organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={adjustRecord.dueAt} required /></label>
           <label><span>当前 / 追加课程</span><select className="form-control" name="courseTitle" defaultValue={adjustRecord.courseTitle}><option>新人入职说明</option><option>信息安全基础</option><option>员工制度必读</option></select></label>
         </form> : null}
