@@ -1270,6 +1270,14 @@ progress.compact-progress::-moz-progress-bar,
   border-bottom: 1px solid var(--paper-200);
 }
 
+.management-row--simple {
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+
+.management-row--simple .table-action {
+  white-space: nowrap;
+}
+
 .management-row:last-child {
   border-bottom: 0;
 }
