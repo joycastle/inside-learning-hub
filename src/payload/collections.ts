@@ -55,7 +55,7 @@ export const Departments: CollectionConfig = {
 export const Media: CollectionConfig = {
   slug: 'media',
   access: { read: adminOnly, create: adminOnly, update: adminOnly, delete: adminOnly },
-  upload: { mimeTypes: ['application/pdf', 'video/mp4', 'image/*'], staticDir: 'media' },
+  upload: { mimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'video/mp4', 'image/*'], staticDir: 'media' },
   fields: [
     { name: 'title', type: 'text', required: true },
     { name: 'storageKey', type: 'text', unique: true, index: true },

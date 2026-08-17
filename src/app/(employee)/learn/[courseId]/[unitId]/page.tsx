@@ -7,6 +7,7 @@ import { VideoLesson } from '@/components/video-lesson'
 import { onboardingPath } from '@/lib/demo-data'
 import { getCourseById } from '@/lib/payload-data'
 import { requireUser } from '@/lib/auth'
+import { createMediaDownloadUrl } from '@/lib/media-storage'
 
 export default async function LessonPage({ params }: { params: Promise<{ courseId: string; unitId: string }> }) {
   const { courseId, unitId } = await params
@@ -16,6 +17,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
     : onboardingPath.courses.find((item) => item.id === courseId)
   const unit = course?.units.find((item) => item.id === unitId)
   if (!course || !unit) notFound()
+  const mediaUrl = unit.mediaKey ? await createMediaDownloadUrl(unit.mediaKey) : undefined
 
   return (
     <div className="lesson-layout">
@@ -40,7 +42,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
           {unit.type === 'video' ? (
             <VideoLesson
               unitId={unit.id}
-              source={unit.videoUrl}
+              source={unit.videoUrl ?? mediaUrl}
               initialProgress={unit.progress}
               hasQuiz={unit.hasQuiz}
               quizUnlocked
@@ -75,7 +77,7 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
           ) : null}
 
           {unit.type === 'pdf' ? (
-            <div className="surface empty-state"><h2 className="section-heading">PDF 预览</h2><p>正式环境通过 MinIO 签名地址加载 PDF，并在预览失败时提供下载。</p></div>
+            <div className="surface empty-state"><h2 className="section-heading">PDF 资料</h2><p>资料通过私有存储加载，访问地址会定时失效。</p>{mediaUrl ? <a className="button button--primary" href={mediaUrl} target="_blank" rel="noreferrer">打开 PDF</a> : null}</div>
           ) : null}
 
           {unit.type !== 'video' && unit.hasQuiz ? (

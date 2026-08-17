@@ -29,15 +29,17 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
     const summary = String(formData.get('summary') ?? '').trim()
     const dueDays = Number(formData.get('dueDays') ?? 7)
     if (!title) return
+    let persistedId: string | undefined
     if (process.env.NODE_ENV !== 'test') {
       const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'path', title, summary, dueDays }) })
       if (!response.ok) { setFeedback('培训路径保存失败，请稍后重试。'); return }
+      persistedId = String((await response.json() as { id: string | number }).id)
     }
     const today = new Date()
     const dueAt = new Date(today)
     dueAt.setDate(today.getDate() + dueDays)
     const path: LearningPath = {
-      id: `path-${crypto.randomUUID()}`,
+      id: persistedId ?? `path-${crypto.randomUUID()}`,
       title,
       summary,
       assignedAt: today.toISOString().slice(0, 10),
@@ -59,12 +61,28 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
     const category = String(formData.get('category') ?? '').trim() || '新员工必看'
     const unitTitle = String(formData.get('unitTitle') ?? '').trim()
     const unitType = String(formData.get('unitType') ?? 'video') as UnitType
+    const file = formData.get('media')
+    const uploadedFile = file instanceof File && file.size > 0 ? file : null
     if (!title) return
+    let persistedId: string | undefined
+    let persistedUnitId: string | undefined
     if (process.env.NODE_ENV !== 'test') {
-      const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'course', pathId: selectedPath.id, title, summary, category, unitTitle: unitTitle || undefined, unitType }) })
+      let mediaId: string | undefined
+      if (uploadedFile) {
+        const uploadForm = new FormData()
+        uploadForm.set('title', unitTitle || title)
+        uploadForm.set('file', uploadedFile)
+        const uploadResponse = await fetch('/api/admin/media', { method: 'POST', body: uploadForm })
+        if (!uploadResponse.ok) { setFeedback('文件上传失败，请检查文件格式或存储服务。'); return }
+        mediaId = String((await uploadResponse.json() as { id: string | number }).id)
+      }
+      const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'course', pathId: selectedPath.id, title, summary, category, unitTitle: unitTitle || undefined, unitType, mediaId }) })
       if (!response.ok) { setFeedback('课程保存失败，请稍后重试。'); return }
+      const result = await response.json() as { id: string | number; unitId?: string | number }
+      persistedId = String(result.id)
+      persistedUnitId = result.unitId === undefined ? undefined : String(result.unitId)
     }
-    const courseId = `course-${crypto.randomUUID()}`
+    const courseId = persistedId ?? `course-${crypto.randomUUID()}`
     const course: Course = {
       id: courseId,
       pathId: selectedPath.id,
@@ -78,7 +96,7 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
       completedUnits: 0,
       unitCount: unitTitle ? 1 : 0,
       units: unitTitle ? [{
-        id: `unit-${crypto.randomUUID()}`,
+        id: persistedUnitId ?? `unit-${crypto.randomUUID()}`,
         courseId,
         order: 1,
         title: unitTitle,
@@ -179,6 +197,7 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
             <label><span>第一个单元（可选）</span><input className="form-control" name="unitTitle" placeholder="例如：入职介绍视频" /></label>
             <label><span>单元类型</span><select className="form-control" name="unitType" defaultValue="video"><option value="video">视频</option><option value="article">图文</option><option value="pdf">PDF</option><option value="feishuDoc">飞书文档</option></select></label>
           </div>
+          <label><span>单元资源（可选）</span><input className="form-control" name="media" type="file" accept="video/mp4,application/pdf,image/png,image/jpeg,image/webp" /></label>
         </form>
       </AdminDialog>
     </>

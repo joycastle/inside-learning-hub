@@ -4,12 +4,16 @@ import { notFound } from 'next/navigation'
 import { serviceArticles } from '@/lib/demo-data'
 import { formatDate } from '@/lib/format'
 import { getServiceArticles } from '@/lib/payload-data'
+import { createMediaDownloadUrl } from '@/lib/media-storage'
+import { requireUser } from '@/lib/auth'
 
 export default async function ServiceArticlePage({ params }: { params: Promise<{ articleId: string }> }) {
   const { articleId } = await params
+  await requireUser()
   const articles = process.env.DEMO_MODE === 'false' ? await getServiceArticles() : serviceArticles
   const article = articles.find((item) => item.id === articleId)
   if (!article) notFound()
+  const mediaUrl = article.mediaKey ? await createMediaDownloadUrl(article.mediaKey) : undefined
 
   return (
     <div className="page-container main-content service-article-page">
@@ -30,6 +34,7 @@ export default async function ServiceArticlePage({ params }: { params: Promise<{
           <aside className="service-policy-note">本页为员工手册的便捷摘要，不替代完整制度。发生版本更新或与公司最新公告不一致时，以最新公示文件及审批结果为准。</aside>
         </div>
         {article.url ? <a className="button button--primary" href={article.url} target="_blank" rel="noreferrer">前往办理<ExternalLink size={16} aria-hidden="true" /></a> : null}
+        {mediaUrl ? <a className="button button--secondary" href={mediaUrl} target="_blank" rel="noreferrer">打开附件<ExternalLink size={16} aria-hidden="true" /></a> : null}
       </article>
     </div>
   )

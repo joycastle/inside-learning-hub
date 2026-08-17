@@ -30,6 +30,7 @@ export interface LearningUnit {
   content?: string[]
   externalUrl?: string
   videoUrl?: string
+  mediaKey?: string
 }
 
 export interface Course {
@@ -106,6 +107,7 @@ export interface ServiceArticle {
   type: 'article' | 'pdf' | 'feishuDoc' | 'externalLink'
   updatedAt: string
   url?: string
+  mediaKey?: string
   tags: string[]
   source?: string
   sections?: Array<{
@@ -113,6 +115,16 @@ export interface ServiceArticle {
     paragraphs?: string[]
     items?: string[]
   }>
+}
+
+export interface Announcement {
+  id: string
+  title: string
+  summary?: string
+  audience: 'all' | 'newEmployees' | 'departments'
+  startsAt?: string
+  endsAt?: string
+  targetUrl?: string
 }
 
 export interface TrainingRecord {
