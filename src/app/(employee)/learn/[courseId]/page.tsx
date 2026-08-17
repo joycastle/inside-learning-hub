@@ -10,6 +10,7 @@ const unitIcons: Record<UnitType, typeof Film> = {
   video: Film,
   article: BookOpen,
   pdf: FileText,
+  html: FileText,
   feishuDoc: Link2,
 }
 

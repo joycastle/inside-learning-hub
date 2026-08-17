@@ -13,7 +13,7 @@ export interface AppUser {
   joinedAt: string
 }
 
-export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video'
+export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video' | 'html'
 export type LearningStatus = 'notStarted' | 'inProgress' | 'completed' | 'overdue'
 
 export interface LearningUnit {

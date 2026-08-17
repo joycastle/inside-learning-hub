@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, BookOpenText, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { DocumentPreview } from '@/components/document-preview'
 import { VideoLesson } from '@/components/video-lesson'
 import { getEnrollments } from '@/lib/api/server'
 
@@ -68,9 +69,8 @@ export default async function LessonPage({ params }: { params: Promise<{ courseI
             </div>
           ) : null}
 
-          {unit.type === 'pdf' ? (
-            <div className="surface empty-state"><h2 className="section-heading">PDF 预览</h2><p>正式环境通过 MinIO 签名地址加载 PDF，并在预览失败时提供下载。</p></div>
-          ) : null}
+          {unit.type === 'pdf' ? (unit.externalUrl ? <DocumentPreview title={unit.title} type="pdf" url={unit.externalUrl} /> : <div className="surface empty-state"><h2 className="section-heading">PDF 暂不可用</h2><p>当前单元尚未关联 PDF 文件。</p></div>) : null}
+          {unit.type === 'html' ? (unit.externalUrl ? <DocumentPreview title={unit.title} type="html" url={unit.externalUrl} /> : <div className="surface empty-state"><h2 className="section-heading">HTML 讲义暂不可用</h2><p>当前单元尚未关联 HTML 文件。</p></div>) : null}
 
         </article>
       </main>

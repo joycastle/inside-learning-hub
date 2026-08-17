@@ -34,6 +34,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
 export const getCurrentUserFromApi = async () => (await apiRequest<{ user: AppUser }>('/auth/me')).user
 export const getEnrollments = async () => (await apiRequest<ListResponse<LearningPath>>('/learning/enrollments')).items
+export const getAdminTrainingPaths = async () => (await apiRequest<ListResponse<LearningPath>>('/admin/training/paths')).items
 export const getEnrollment = (id: string) => apiRequest<LearningPath>(`/learning/enrollments/${id}`)
 export const getQuizAttempts = async () => (await apiRequest<ListResponse<Record<string, unknown>>>('/me/quiz-attempts')).items
 

@@ -1,13 +1,13 @@
 import { AdminPageHeader } from '@/components/admin-page-header'
 import { AdminTrainingManager } from '@/components/admin-training-manager'
 import { requireAdmin } from '@/lib/auth'
-import { getEnrollments } from '@/lib/api/server'
+import { getAdminTrainingPaths } from '@/lib/api/server'
 
 export const metadata = { title: '培训管理' }
 
 export default async function TrainingManagementPage() {
   await requireAdmin()
-  const paths = await getEnrollments()
+  const paths = await getAdminTrainingPaths()
   const path = paths[0]
 
   return (
