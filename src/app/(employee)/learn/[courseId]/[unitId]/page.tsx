@@ -5,10 +5,15 @@ import { QuizPanel } from '@/components/quiz-panel'
 import { CompleteUnitButton } from '@/components/complete-unit-button'
 import { VideoLesson } from '@/components/video-lesson'
 import { onboardingPath } from '@/lib/demo-data'
+import { getCourseById } from '@/lib/payload-data'
+import { requireUser } from '@/lib/auth'
 
 export default async function LessonPage({ params }: { params: Promise<{ courseId: string; unitId: string }> }) {
   const { courseId, unitId } = await params
-  const course = onboardingPath.courses.find((item) => item.id === courseId)
+  const user = await requireUser()
+  const course = process.env.DEMO_MODE === 'false'
+    ? await getCourseById(courseId, user)
+    : onboardingPath.courses.find((item) => item.id === courseId)
   const unit = course?.units.find((item) => item.id === unitId)
   if (!course || !unit) notFound()
 

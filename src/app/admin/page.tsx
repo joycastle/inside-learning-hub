@@ -11,6 +11,7 @@ import {
   videoAnalytics,
 } from '@/lib/demo-data'
 import { formatDateTime, formatDuration } from '@/lib/format'
+import { getTrainingRecords } from '@/lib/payload-data'
 
 export const metadata = { title: '数据概览' }
 
@@ -50,13 +51,14 @@ const buildCompletionTrend = (dateFrom: string, dateTo: string, records: typeof 
 }
 
 export default async function AdminOverviewPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const records = process.env.DEMO_MODE === 'false' ? await getTrainingRecords() : trainingRecords
   const params = await searchParams
   const valueOf = (key: string) => typeof params[key] === 'string' ? params[key] : undefined
   const defaultDateRange = getDefaultDateRange()
   const dateFrom = valueOf('dateFrom') ?? defaultDateRange.dateFrom
   const dateTo = valueOf('dateTo') ?? defaultDateRange.dateTo
   const department = valueOf('department')
-  const filteredRecords = trainingRecords.filter((record) => {
+  const filteredRecords = records.filter((record) => {
     if (department && department !== 'all' && record.departmentName !== department) return false
     if (dateFrom && record.assignedAt < dateFrom) return false
     if (dateTo && record.assignedAt > dateTo) return false

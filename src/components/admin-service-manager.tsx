@@ -4,7 +4,6 @@ import { ArrowUpRight, FileText, LayoutTemplate, Plus, Upload } from 'lucide-rea
 import { useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { formatDate } from '@/lib/format'
-import { useStoredState } from '@/lib/use-stored-state'
 import type { ServiceArticle } from '@/lib/types'
 
 type ManagedServiceArticle = ServiceArticle & {
@@ -18,12 +17,12 @@ export interface AdminServiceManagerProps {
 }
 
 export function AdminServiceManager({ initialArticles }: AdminServiceManagerProps) {
-  const [articles, setArticles] = useStoredState<ManagedServiceArticle[]>('admin-service-content-v1', initialArticles.map((article) => ({ ...article, creationMode: 'page', status: 'published' })))
+  const [articles, setArticles] = useState<ManagedServiceArticle[]>(initialArticles.map((article) => ({ ...article, creationMode: 'page', status: 'published' })))
   const [dialogOpen, setDialogOpen] = useState(false)
   const [creationMode, setCreationMode] = useState<'page' | 'upload'>('page')
   const [feedback, setFeedback] = useState('')
 
-  const createContent = (formData: FormData) => {
+  const createContent = async (formData: FormData) => {
     const title = String(formData.get('title') ?? '').trim()
     const summary = String(formData.get('summary') ?? '').trim()
     const category = String(formData.get('category') ?? 'HR') as ServiceArticle['category']
@@ -61,6 +60,8 @@ export function AdminServiceManager({ initialArticles }: AdminServiceManagerProp
       fileName: uploadedFile?.name,
       status,
     }
+    const response = await fetch('/api/admin/services', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, summary, category, tags, status, type: nextArticle.type, bodyText: content, source: nextArticle.source, fileName: nextArticle.fileName }) })
+    if (!response.ok) { setFeedback('员工服务内容保存失败，请稍后重试。'); return }
     setArticles((current) => [nextArticle, ...current])
     setDialogOpen(false)
     setFeedback(`已${status === 'published' ? '发布' : '保存'}“${title}”。`)

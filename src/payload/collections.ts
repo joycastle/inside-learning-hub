@@ -87,6 +87,8 @@ export const Courses: CollectionConfig = {
   fields: [
     titleField,
     slugField,
+    { name: 'path', type: 'relationship', relationTo: 'learning-paths', required: true, index: true },
+    { name: 'order', type: 'number', min: 0, defaultValue: 0 },
     { name: 'summary', type: 'textarea', required: true },
     { name: 'category', type: 'text', required: true },
     { name: 'durationMinutes', type: 'number', min: 0 },
@@ -101,6 +103,8 @@ export const Units: CollectionConfig = {
   access: { read: ({ req }) => Boolean(req.user), create: adminOnly, update: adminOnly, delete: adminOnly },
   fields: [
     titleField,
+    { name: 'course', type: 'relationship', relationTo: 'courses', required: true, index: true },
+    { name: 'order', type: 'number', min: 0, defaultValue: 0 },
     { name: 'description', type: 'textarea', required: true },
     { name: 'type', type: 'select', required: true, options: ['article', 'pdf', 'feishuDoc', 'video'] },
     { name: 'durationMinutes', type: 'number', min: 0 },
@@ -124,6 +128,7 @@ export const Questions: CollectionConfig = {
   versions: { maxPerDoc: 20 },
   access: { read: adminOnly, create: adminOnly, update: adminOnly, delete: adminOnly },
   fields: [
+    { name: 'course', type: 'relationship', relationTo: 'courses', required: true, index: true },
     { name: 'category', type: 'relationship', relationTo: 'question-categories', required: true },
     { name: 'type', type: 'select', required: true, options: ['single', 'multiple', 'trueFalse'] },
     { name: 'prompt', type: 'textarea', required: true },
@@ -131,6 +136,7 @@ export const Questions: CollectionConfig = {
     { name: 'explanation', type: 'textarea', required: true },
     { name: 'difficulty', type: 'select', defaultValue: 'easy', options: ['easy', 'medium', 'hard'] },
     { name: 'active', type: 'checkbox', defaultValue: true },
+    { name: 'status', type: 'select', defaultValue: 'published', options: ['draft', 'published'] },
   ],
 }
 
@@ -248,6 +254,10 @@ export const KnowledgeArticles: CollectionConfig = {
     titleField,
     slugField,
     { name: 'summary', type: 'textarea', required: true },
+    { name: 'type', type: 'select', defaultValue: 'article', options: ['article', 'pdf', 'feishuDoc', 'externalLink'] },
+    { name: 'bodyText', type: 'textarea' },
+    { name: 'source', type: 'text' },
+    { name: 'status', type: 'select', defaultValue: 'published', options: ['draft', 'published'] },
     { name: 'category', type: 'relationship', relationTo: 'service-categories', required: true },
     { name: 'body', type: 'richText' },
     { name: 'media', type: 'relationship', relationTo: 'media' },

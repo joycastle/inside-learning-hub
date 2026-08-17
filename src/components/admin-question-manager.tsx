@@ -4,7 +4,6 @@ import { Eye, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { extractDocxText, importQuestionsFromText } from '@/lib/question-import'
-import { useStoredState } from '@/lib/use-stored-state'
 import type { LearningPath, QuestionType, QuizQuestion } from '@/lib/types'
 
 type ManagedQuestion = QuizQuestion & { status: 'published' | 'draft' }
@@ -43,7 +42,7 @@ const categoryLabel = (categoryId: string) => {
 }
 
 export function AdminQuestionManager({ initialPath, initialQuestions }: AdminQuestionManagerProps) {
-  const [paths] = useStoredState<LearningPath[]>('admin-training-paths-v1', [initialPath])
+  const paths = [initialPath]
   const courseOptions = useMemo(() => {
     const courses = paths.flatMap((path) => path.courses)
     const uniqueCourses = new Map(courses.map((course) => [course.id, course]))
@@ -51,7 +50,7 @@ export function AdminQuestionManager({ initialPath, initialQuestions }: AdminQue
     return [...uniqueCourses.values()]
   }, [initialPath.courses, paths])
   const defaultCourseId = courseOptions[0]?.id ?? initialPath.courses[0]?.id ?? 'course-onboarding'
-  const [questions, setQuestions] = useStoredState<ManagedQuestion[]>('admin-question-bank-v3', initialQuestions.map((question) => ({ ...question, courseId: question.courseId || defaultCourseId, status: 'published' })))
+  const [questions, setQuestions] = useState<ManagedQuestion[]>(initialQuestions.map((question) => ({ ...question, courseId: question.courseId || defaultCourseId, status: 'published' })))
   const [selectedCourseId, setSelectedCourseId] = useState('all')
   const [editorOpen, setEditorOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -85,19 +84,23 @@ export function AdminQuestionManager({ initialPath, initialQuestions }: AdminQue
     }))
   }
 
-  const saveQuestion = () => {
+  const saveQuestion = async () => {
     if (!draft.prompt.trim() || draft.options.some((option) => !option.label.trim()) || draft.correctOptionIds.length === 0) {
       setFeedback('请填写题目、全部选项并设置正确答案。')
       return
     }
+    const response = await fetch('/api/admin/questions', { method: draft.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(draft) })
+    if (!response.ok) { setFeedback('题目保存失败，请稍后重试。'); return }
     const nextQuestion = { ...draft, id: draft.id || `question-${crypto.randomUUID()}` }
     setQuestions((current) => draft.id ? current.map((question) => question.id === draft.id ? nextQuestion : question) : [...current, nextQuestion])
     setEditorOpen(false)
     setFeedback(draft.id ? '题目已更新。' : '题目已创建并保存为草稿。')
   }
 
-  const deleteQuestion = (question: ManagedQuestion) => {
+  const deleteQuestion = async (question: ManagedQuestion) => {
     if (!window.confirm(`确认删除题目“${question.prompt}”吗？历史答题快照不会受影响。`)) return
+    const response = await fetch(`/api/admin/questions?id=${encodeURIComponent(question.id)}`, { method: 'DELETE' })
+    if (!response.ok) { setFeedback('题目删除失败，请稍后重试。'); return }
     setQuestions((current) => current.filter((item) => item.id !== question.id))
     setFeedback('题目已删除。')
   }
@@ -108,7 +111,13 @@ export function AdminQuestionManager({ initialPath, initialQuestions }: AdminQue
       const targetCourseId = selectedCourseId === 'all' ? defaultCourseId : selectedCourseId
       const imported = importQuestionsFromText(text).map((question) => ({ ...question, courseId: targetCourseId, status: 'draft' as const }))
       if (!imported.length) throw new Error('没有识别到有效题目，请检查模板格式')
-      setQuestions((current) => [...current, ...imported])
+      const saved: ManagedQuestion[] = []
+      for (const question of imported) {
+        const response = await fetch('/api/admin/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(question) })
+        if (!response.ok) throw new Error('部分题目保存失败，请检查课程和分类配置')
+        saved.push(question)
+      }
+      setQuestions((current) => [...current, ...saved])
       setImportOpen(false)
       setFeedback(`已导入 ${imported.length} 道题，状态为草稿。`)
     } catch (error) {

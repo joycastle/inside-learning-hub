@@ -3,12 +3,16 @@ import { OnboardingVideoCard } from '@/components/onboarding-video-card'
 import { WelcomeEnvelope } from '@/components/welcome-envelope'
 import { requireUser } from '@/lib/auth'
 import { onboardingPath, serviceArticles } from '@/lib/demo-data'
+import { getLearningPathForUser, getServiceArticles } from '@/lib/payload-data'
 
 export const metadata = { title: '首页' }
 
 export default async function HomePage() {
   const user = await requireUser()
-  const onboardingCourse = onboardingPath.courses[0]
+  const path = process.env.DEMO_MODE === 'false' ? await getLearningPathForUser(user) : onboardingPath
+  const services = process.env.DEMO_MODE === 'false' ? await getServiceArticles() : serviceArticles
+  const onboardingCourse = path?.courses[0]
+  if (!onboardingCourse) return null
   const onboardingVideo = onboardingCourse.units[0]
 
   return (
@@ -46,7 +50,7 @@ export default async function HomePage() {
             <h2 className="section-heading">常用员工服务</h2>
           </header>
           <div className="service-quick-list">
-            {serviceArticles.slice(0, 3).map((article) => (
+            {services.slice(0, 3).map((article) => (
               <Link className="service-quick-link interactive-row" href={article.url ?? `/services/${article.id}`} key={article.id} target={article.url ? '_blank' : undefined} rel={article.url ? 'noreferrer' : undefined}>
                 <span className="service-quick-link__category">{article.category}</span>
                 <span><strong>{article.title}</strong><small>{article.summary}</small></span>

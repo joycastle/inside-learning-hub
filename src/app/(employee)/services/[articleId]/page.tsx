@@ -3,10 +3,12 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { serviceArticles } from '@/lib/demo-data'
 import { formatDate } from '@/lib/format'
+import { getServiceArticles } from '@/lib/payload-data'
 
 export default async function ServiceArticlePage({ params }: { params: Promise<{ articleId: string }> }) {
   const { articleId } = await params
-  const article = serviceArticles.find((item) => item.id === articleId)
+  const articles = process.env.DEMO_MODE === 'false' ? await getServiceArticles() : serviceArticles
+  const article = articles.find((item) => item.id === articleId)
   if (!article) notFound()
 
   return (

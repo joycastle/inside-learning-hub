@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ProgressBar } from '@/components/progress-bar'
 import { StatusBadge } from '@/components/status-badge'
+import { requireUser } from '@/lib/auth'
 import { onboardingPath } from '@/lib/demo-data'
+import { getCourseById } from '@/lib/payload-data'
 import type { UnitType } from '@/lib/types'
 
 const unitIcons: Record<UnitType, typeof Film> = {
@@ -15,7 +17,10 @@ const unitIcons: Record<UnitType, typeof Film> = {
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params
-  const course = onboardingPath.courses.find((item) => item.id === courseId)
+  const user = await requireUser()
+  const course = process.env.DEMO_MODE === 'false'
+    ? await getCourseById(courseId, user)
+    : onboardingPath.courses.find((item) => item.id === courseId)
   if (!course) notFound()
 
   return (

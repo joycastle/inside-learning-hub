@@ -3,6 +3,8 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ArrowLeftRight, LogOut, Settings, UserRound } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { UserAvatar } from '@/components/user-avatar'
 import type { AppUser } from '@/lib/types'
 
@@ -14,7 +16,20 @@ interface AvatarMenuProps {
 }
 
 export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAlign = 'end' }: AvatarMenuProps) {
+  const router = useRouter()
+  const [loggingOut, setLoggingOut] = useState(false)
   const canAccessAdmin = user.role === 'admin' || user.role === 'superAdmin'
+
+  const logout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+    } finally {
+      router.replace('/login')
+      router.refresh()
+    }
+  }
 
   return (
     <DropdownMenu.Root>
@@ -50,11 +65,9 @@ export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAli
           ) : null}
           <DropdownMenu.Separator className="menu-separator" />
           <DropdownMenu.Item asChild>
-            <form action="/api/auth/logout" method="post">
-              <button className="menu-item" type="submit">
-                <LogOut size={16} aria-hidden="true" />退出登录
-              </button>
-            </form>
+            <button className="menu-item" type="button" onClick={() => void logout()} disabled={loggingOut}>
+              <LogOut size={16} aria-hidden="true" />{loggingOut ? '正在退出…' : '退出登录'}
+            </button>
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

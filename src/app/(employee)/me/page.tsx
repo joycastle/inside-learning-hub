@@ -1,5 +1,6 @@
 import { requireUser } from '@/lib/auth'
 import { onboardingPath } from '@/lib/demo-data'
+import { getLearningPathForUser } from '@/lib/payload-data'
 import { formatDate } from '@/lib/format'
 import { ProgressBar } from '@/components/progress-bar'
 import { StatusBadge } from '@/components/status-badge'
@@ -9,6 +10,7 @@ export const metadata = { title: '我的' }
 
 export default async function MePage() {
   const user = await requireUser()
+  const path = process.env.DEMO_MODE === 'false' ? await getLearningPathForUser(user) : onboardingPath
 
   return (
     <div className="page-container main-content">
@@ -29,9 +31,9 @@ export default async function MePage() {
           <h2 className="section-heading">当前培训</h2>
           <div className="record-list">
             <div className="record-row">
-              <span><strong>{onboardingPath.title}</strong><div className="text-small text-muted">截止 {formatDate(onboardingPath.dueAt)}</div></span>
-              <span><ProgressBar value={onboardingPath.progress} label="入职路径进度" /></span>
-              <strong className="tabular">{onboardingPath.progress}%</strong>
+              <span><strong>{path?.title ?? '暂无培训路径'}</strong><div className="text-small text-muted">{path ? `截止 ${formatDate(path.dueAt)}` : '等待管理员分配'}</div></span>
+              <span><ProgressBar value={path?.progress ?? 0} label="入职路径进度" /></span>
+              <strong className="tabular">{path?.progress ?? 0}%</strong>
             </div>
           </div>
           <h2 className="section-heading profile-section-heading">最近测评</h2>

@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { ProgressBar } from '@/components/progress-bar'
 import { StatusBadge } from '@/components/status-badge'
-import { useStoredState } from '@/lib/use-stored-state'
 import type { Course, LearningPath, UnitType } from '@/lib/types'
 
 export interface AdminTrainingManagerProps {
@@ -14,8 +13,8 @@ export interface AdminTrainingManagerProps {
 }
 
 export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps) {
-  const [paths, setPaths] = useStoredState<LearningPath[]>('admin-training-paths-v1', [initialPath])
-  const [selectedPathId, setSelectedPathId] = useStoredState<string>('admin-selected-training-path-v1', initialPath.id)
+  const [paths, setPaths] = useState<LearningPath[]>([initialPath])
+  const [selectedPathId, setSelectedPathId] = useState(initialPath.id)
   const [pathDialogOpen, setPathDialogOpen] = useState(false)
   const [courseDialogOpen, setCourseDialogOpen] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -25,11 +24,15 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
     [initialPath, paths, selectedPathId],
   )
 
-  const createPath = (formData: FormData) => {
+  const createPath = async (formData: FormData) => {
     const title = String(formData.get('title') ?? '').trim()
     const summary = String(formData.get('summary') ?? '').trim()
     const dueDays = Number(formData.get('dueDays') ?? 7)
     if (!title) return
+    if (process.env.NODE_ENV !== 'test') {
+      const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'path', title, summary, dueDays }) })
+      if (!response.ok) { setFeedback('培训路径保存失败，请稍后重试。'); return }
+    }
     const today = new Date()
     const dueAt = new Date(today)
     dueAt.setDate(today.getDate() + dueDays)
@@ -50,13 +53,17 @@ export function AdminTrainingManager({ initialPath }: AdminTrainingManagerProps)
     setFeedback(`已创建培训路径“${title}”`)
   }
 
-  const createCourse = (formData: FormData) => {
+  const createCourse = async (formData: FormData) => {
     const title = String(formData.get('title') ?? '').trim()
     const summary = String(formData.get('summary') ?? '').trim()
     const category = String(formData.get('category') ?? '').trim() || '新员工必看'
     const unitTitle = String(formData.get('unitTitle') ?? '').trim()
     const unitType = String(formData.get('unitType') ?? 'video') as UnitType
     if (!title) return
+    if (process.env.NODE_ENV !== 'test') {
+      const response = await fetch('/api/admin/training', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'course', pathId: selectedPath.id, title, summary, category, unitTitle: unitTitle || undefined, unitType }) })
+      if (!response.ok) { setFeedback('课程保存失败，请稍后重试。'); return }
+    }
     const courseId = `course-${crypto.randomUUID()}`
     const course: Course = {
       id: courseId,

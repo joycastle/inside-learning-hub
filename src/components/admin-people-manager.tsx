@@ -6,7 +6,6 @@ import { AdminDialog } from '@/components/admin-dialog'
 import { StatusBadge } from '@/components/status-badge'
 import { formatDate } from '@/lib/format'
 import { useFeishuOrganization } from '@/lib/use-feishu-organization'
-import { useStoredState } from '@/lib/use-stored-state'
 import type { FeishuOrganization, TrainingRecord } from '@/lib/types'
 
 export interface AdminPeopleManagerProps {
@@ -21,7 +20,7 @@ const getDefaultDueDate = () => {
 }
 
 export function AdminPeopleManager({ initialRecords, initialOrganization }: AdminPeopleManagerProps) {
-  const [records, setRecords] = useStoredState<TrainingRecord[]>('admin-training-records-v1', initialRecords)
+  const [records, setRecords] = useState<TrainingRecord[]>(initialRecords)
   const { organization, syncing } = useFeishuOrganization(initialOrganization)
   const [query, setQuery] = useState('')
   const [department, setDepartment] = useState('all')
@@ -45,7 +44,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
     setEmployeeQuery('')
   }
 
-  const assignTraining = (formData: FormData) => {
+  const assignTraining = async (formData: FormData) => {
     const pathTitle = String(formData.get('pathTitle') ?? '新员工入职学习路径')
     const courseTitle = String(formData.get('courseTitle') ?? '新人入职说明')
     const dueAt = String(formData.get('dueAt') ?? getDefaultDueDate())
@@ -53,6 +52,8 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       setFeedback('请至少选择一名员工。')
       return
     }
+    const response = await fetch('/api/admin/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userIds: selectedEmployeeIds, dueAt }) })
+    if (!response.ok) { setFeedback('培训分配保存失败，请稍后重试。'); return }
     const selectedEmployees = organization.employees.filter((employee) => selectedEmployeeIds.includes(employee.id))
     setRecords((current) => {
       const existingIds = new Set(current.map((record) => record.userId))
@@ -81,10 +82,12 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
     setSelectedEmployeeIds([])
   }
 
-  const adjustAssignment = (formData: FormData) => {
+  const adjustAssignment = async (formData: FormData) => {
     if (!adjustRecord) return
     const dueAt = String(formData.get('dueAt') ?? adjustRecord.dueAt)
     const courseTitle = String(formData.get('courseTitle') ?? adjustRecord.courseTitle)
+    const response = await fetch('/api/admin/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userIds: [adjustRecord.userId], dueAt }) })
+    if (!response.ok) { setFeedback('培训调整保存失败，请稍后重试。'); return }
     setRecords((current) => current.map((record) => record.userId === adjustRecord.userId ? { ...record, dueAt, courseTitle } : record))
     setAdjustRecord(null)
     setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
