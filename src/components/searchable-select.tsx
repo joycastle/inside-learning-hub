@@ -13,6 +13,7 @@ export function SearchableSelect({
   onChange,
   placeholder = '请选择',
   searchPlaceholder = '搜索…',
+  emptyMessage = '没有找到匹配项',
   disabled = false,
   required = false,
 }: {
@@ -22,6 +23,7 @@ export function SearchableSelect({
   onChange: (value: string) => void
   placeholder?: string
   searchPlaceholder?: string
+  emptyMessage?: string
   disabled?: boolean
   required?: boolean
 }) {
@@ -89,7 +91,7 @@ export function SearchableSelect({
       <label className="searchable-select__search"><Search size={15} aria-hidden="true" /><span className="sr-only">{searchPlaceholder}</span><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlaceholder} /></label>
       <div className="searchable-select__options">
         {filtered.map((option) => <button className="searchable-select__option" data-selected={option.value === value} type="button" role="option" aria-selected={option.value === value} key={option.value} onClick={() => choose(option.value)}><span>{option.label}</span>{option.value === value ? <Check size={15} aria-hidden="true" /> : null}</button>)}
-        {!filtered.length ? <p className="searchable-select__empty">没有找到匹配项</p> : null}
+        {!filtered.length ? <p className="searchable-select__empty" role="status">{emptyMessage}</p> : null}
       </div>
     </div>, document.body) : null}
   </div>

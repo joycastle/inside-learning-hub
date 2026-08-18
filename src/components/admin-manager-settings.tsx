@@ -45,7 +45,7 @@ export function AdminManagerSettings({ initialOrganization, currentUserId }: Adm
     <section className="admin-panel settings-panel settings-panel--wide">
       <div className="settings-panel__heading"><div><h2>管理员配置</h2><p>从飞书通讯录选择人员，授予管理端访问权限</p></div><ShieldCheck size={20} aria-hidden="true" /></div>
       <div className="admin-manager-controls">
-        <label><span>员工邮箱</span><SearchableSelect value={selectedId} onChange={setSelectedId} placeholder="请选择员工邮箱" searchPlaceholder="搜索姓名或邮箱" options={candidates.map((employee) => ({ value: employee.id, label: `${employee.email} · ${employee.name}`, searchText: `${employee.name} ${employee.email ?? ''} ${employee.departmentName}` }))} /></label>
+        <label><span>员工邮箱</span><SearchableSelect value={selectedId} onChange={setSelectedId} placeholder="请选择员工邮箱" searchPlaceholder="搜索姓名或邮箱" emptyMessage={candidates.length ? '没有找到匹配项' : '暂无可授权员工（超级管理员不会重复显示）'} options={candidates.map((employee) => ({ value: employee.id, label: `${employee.email ?? '未填写邮箱'} · ${employee.name}`, searchText: `${employee.name} ${employee.email ?? ''} ${employee.departmentName}` }))} /></label>
         <label><span>授权角色</span><select className="form-control" value={selectedRole} onChange={(event) => setSelectedRole(event.target.value as 'admin' | 'superAdmin')}><option value="admin">管理员</option><option value="superAdmin">超级管理员</option></select></label>
         <button className="button button--secondary" type="button" disabled={!selectedId} onClick={() => void addAdmin()}><UserPlus size={16} aria-hidden="true" />授予权限</button>
         <button className="button button--quiet" type="button" onClick={() => void sync()}>{syncing ? '同步中…' : '同步飞书人员'}</button>
