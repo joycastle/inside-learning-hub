@@ -1,7 +1,7 @@
 'use client'
 
-import { Plus } from 'lucide-react'
-import { useState } from 'react'
+import { FileUp, Plus, Trash2 } from 'lucide-react'
+import { useState, type ChangeEvent } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 
 type Option = { optionId: string; label: string; correct: boolean }
@@ -17,6 +17,7 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
   const [editing, setEditing] = useState<Question | null>(null)
   const [feedback, setFeedback] = useState('')
   const [saving, setSaving] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const openNew = () => setEditing({ id: '', category: categories[0]?.id ?? '', type: 'single', prompt: '', options: defaultOptions(), explanation: '', difficulty: 'easy', active: true })
   const openEdit = (question: Question) => setEditing({ ...question, options: question.options?.length ? question.options : defaultOptions() })
@@ -52,17 +53,41 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
     setFeedback('题目已保存。')
   }
 
+  const remove = async (question: Question) => {
+    if (!question.id || !window.confirm('确定删除这道题目吗？')) return
+    const response = await fetch(`/api/v1/admin/content/questions/${question.id}`, { method: 'DELETE', headers: { Origin: window.location.origin } })
+    if (!response.ok) { setFeedback('删除失败，请稍后重试。'); return }
+    setQuestions((current) => current.filter((item) => item.id !== question.id))
+    setFeedback('题目已删除。')
+  }
+
+  const importCsv = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setImporting(true)
+    const form = new FormData()
+    form.set('file', file)
+    const response = await fetch('/api/v1/admin/content/questions/import', { method: 'POST', headers: { Origin: window.location.origin }, body: form })
+    const result = await response.json().catch(() => ({})) as { items?: Question[]; message?: string }
+    setImporting(false)
+    if (!response.ok) { setFeedback(result.message ?? '导入失败，请检查 CSV 格式。'); return }
+    setQuestions((current) => [...(result.items ?? []), ...current])
+    setFeedback(`已导入 ${result.items?.length ?? 0} 道题目。`)
+  }
+
   return (
     <>
       <div className="admin-page-actions admin-page-actions--standalone">
         <button className="button button--primary" type="button" onClick={openNew}><Plus size={16} aria-hidden="true" />新建题目</button>
+        <label className="button button--quiet"><FileUp size={16} aria-hidden="true" />{importing ? '导入中…' : '导入 CSV'}<input type="file" accept=".csv,text/csv" hidden disabled={importing} onChange={importCsv} /></label>
       </div>
       {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
       <section className="admin-panel admin-panel--flush">
         <div className="management-list">
           {questions.length ? questions.map((item) => <div className="management-row management-row--simple" key={item.id}>
             <div className="management-row__body"><strong>{item.prompt ?? '未命名题目'}</strong><p>{item.type === 'multiple' ? '多选题' : item.type === 'trueFalse' ? '判断题' : '单选题'} · {item.difficulty === 'hard' ? '困难' : item.difficulty === 'medium' ? '中等' : '简单'}</p></div>
-            <button className="table-action" type="button" onClick={() => openEdit(item)}>编辑</button>
+            <div className="management-row__actions"><button className="table-action" type="button" onClick={() => openEdit(item)}>编辑</button><button className="table-action table-action--danger" type="button" onClick={() => remove(item)}><Trash2 size={14} aria-hidden="true" />删除</button></div>
           </div>) : <div className="empty-state empty-state--compact"><p>暂无题目，点击右上角新建。</p></div>}
         </div>
       </section>
