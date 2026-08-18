@@ -27,17 +27,22 @@ export function AdminContentManager({ collection, initialItems, emptyText }: { c
       externalUrl: String(formData.get('externalUrl') ?? '').trim(),
       active: true,
     }
-    const response = await fetch(editing.id ? `/api/v1/admin/content/${collection}/${editing.id}` : `/api/v1/admin/content/${collection}`, { method: editing.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', Origin: window.location.origin }, body: JSON.stringify(body) })
-    setSaving(false)
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({})) as { message?: string }
-      setFeedback(error.message ?? '保存失败，请稍后重试。')
-      return
+    try {
+      const response = await fetch(editing.id ? `/api/v1/admin/content/${collection}/${editing.id}` : `/api/v1/admin/content/${collection}`, { method: editing.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', Origin: window.location.origin }, body: JSON.stringify(body) })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { message?: string }
+        setFeedback(error.message ?? '保存失败，请稍后重试。')
+        return
+      }
+      const saved = await response.json() as Item
+      setItems((current) => editing.id ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current])
+      setEditing(null)
+      setFeedback('内容已保存。')
+    } catch {
+      setFeedback('网络异常，保存失败，请稍后重试。')
+    } finally {
+      setSaving(false)
     }
-    const saved = await response.json() as Item
-    setItems((current) => editing.id ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current])
-    setEditing(null)
-    setFeedback('内容已保存。')
   }
 
   return <>
