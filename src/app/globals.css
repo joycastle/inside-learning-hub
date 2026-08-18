@@ -390,6 +390,7 @@ a {
 }
 
 .menu-content {
+  z-index: 200;
   min-width: 224px;
   padding: 7px;
   border: 1px solid var(--paper-200);

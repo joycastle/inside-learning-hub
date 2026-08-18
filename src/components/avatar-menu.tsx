@@ -3,6 +3,8 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ArrowLeftRight, LogOut, Settings, UserRound } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { UserAvatar } from '@/components/user-avatar'
 import type { AppUser } from '@/lib/types'
 
@@ -15,10 +17,23 @@ interface AvatarMenuProps {
 
 export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAlign = 'end' }: AvatarMenuProps) {
   const canAccessAdmin = user.role === 'admin' || user.role === 'superAdmin'
+  const router = useRouter()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const logout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include', headers: { Origin: window.location.origin } })
+    } finally {
+      router.replace('/login')
+      router.refresh()
+    }
+  }
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger className="avatar-trigger" aria-label="打开账户菜单">
+      <DropdownMenu.Trigger className="avatar-trigger" type="button" aria-label="打开账户菜单">
         <UserAvatar user={user} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -49,12 +64,8 @@ export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAli
             </DropdownMenu.Item>
           ) : null}
           <DropdownMenu.Separator className="menu-separator" />
-          <DropdownMenu.Item asChild>
-            <form action="/api/v1/auth/logout" method="post">
-              <button className="menu-item" type="submit">
-                <LogOut size={16} aria-hidden="true" />退出登录
-              </button>
-            </form>
+          <DropdownMenu.Item className="menu-item" disabled={loggingOut} onSelect={(event) => { event.preventDefault(); void logout() }}>
+            <LogOut size={16} aria-hidden="true" />{loggingOut ? '退出中…' : '退出登录'}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
