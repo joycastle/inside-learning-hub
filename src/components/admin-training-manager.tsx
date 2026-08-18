@@ -40,6 +40,10 @@ export function AdminTrainingManager({ initialPath }: { initialPath: LearningPat
     }
     try {
       const file = formData.get('media')
+      if (kind === 'course' && !editingCourse && file instanceof File && file.size > 0 && !String(formData.get('unitTitle') ?? '').trim()) {
+        setFeedback('上传第一个单元资源时，请先填写单元名称。')
+        return
+      }
       if (file instanceof File && file.size > 0) {
         const upload = new FormData()
         upload.set('title', title)
@@ -57,6 +61,7 @@ export function AdminTrainingManager({ initialPath }: { initialPath: LearningPat
       setFeedback(kind === 'path' ? '培训路径已保存。' : kind === 'course' ? '课程已保存。' : '学习单元已保存。')
       close()
       if (kind === 'course' && !editingCourse) window.location.reload()
+      if (kind === 'unit' && body.mediaId) window.location.reload()
     } catch { setFeedback('网络异常，培训内容保存失败，请稍后重试。') } finally { setSaving(false) }
   }
 
