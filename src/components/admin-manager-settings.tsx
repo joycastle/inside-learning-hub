@@ -21,7 +21,7 @@ export function AdminManagerSettings({ initialOrganization, currentUserId }: Adm
 
   const changeRole = async (userId: string, role: 'employee' | 'admin' | 'superAdmin', email?: string) => {
     const response = await fetch(email ? '/api/v1/admin/users/role' : `/api/v1/admin/users/${userId}/role`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }),
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role, ...(email ? { email } : {}) }),
     })
     if (!response.ok) {
       const error = await response.json().catch(() => ({})) as { message?: string }
