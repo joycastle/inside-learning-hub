@@ -21,7 +21,7 @@ const getDefaultDueDate = () => {
 
 export function AdminPeopleManager({ initialRecords, initialOrganization }: AdminPeopleManagerProps) {
   const [records, setRecords] = useState(initialRecords)
-  const { organization, syncing } = useFeishuOrganization(initialOrganization)
+  const { organization, syncing, sync } = useFeishuOrganization(initialOrganization)
   const [query, setQuery] = useState('')
   const [department, setDepartment] = useState('all')
   const [assignOpen, setAssignOpen] = useState(false)
@@ -29,6 +29,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
   const [employeeQuery, setEmployeeQuery] = useState('')
   const [feedback, setFeedback] = useState('')
+  const [departmentSavingId, setDepartmentSavingId] = useState<string | null>(null)
 
   const visibleRecords = useMemo(() => records.filter((record) => {
     const matchesQuery = !query || `${record.userName} ${record.departmentName}`.toLowerCase().includes(query.toLowerCase())
@@ -89,6 +90,24 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
     setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
   }
 
+  const updateDepartment = async (userId: string, departmentId: string) => {
+    setDepartmentSavingId(userId)
+    const response = await fetch(`/api/v1/admin/users/${userId}/department`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Origin: window.location.origin },
+      body: JSON.stringify({ departmentId: departmentId === 'unassigned' ? null : departmentId }),
+    })
+    setDepartmentSavingId(null)
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({})) as { message?: string }
+      setFeedback(error.message ?? '部门调整失败，请稍后重试。')
+      return
+    }
+    await sync()
+    const employee = organization.employees.find((item) => item.id === userId)
+    setFeedback(`已更新${employee?.name ?? '员工'}的部门。`)
+  }
+
   return (
     <>
       <div className="admin-page-actions admin-page-actions--standalone">
@@ -102,6 +121,18 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
         <label className="admin-search-field"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索姓名或部门" /></label>
         <label><span>部门 · {syncing ? '同步中' : '飞书组织架构'}</span><select className="form-control" value={department} onChange={(event) => setDepartment(event.target.value)}><option value="all">全部部门</option>{organization.departments.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></label>
       </div>
+      <section className="admin-panel department-manager" aria-label="员工部门归属">
+        <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div></div>
+        <div className="department-manager__list">
+          {organization.employees.map((employee) => <div className="department-manager__row" key={employee.id}>
+            <span><strong>{employee.name}</strong><small>{employee.email ?? '未填写邮箱'}</small></span>
+            <select className="form-control" value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(event) => void updateDepartment(employee.id, event.target.value)}>
+              <option value="unassigned">未分配部门</option>
+              {organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
+            </select>
+          </div>)}
+        </div>
+      </section>
       <p className="definition-note definition-note--block"><CalendarClock size={14} aria-hidden="true" />“调整分配”用于修改截止日期或追加课程，不会清空员工已有学习进度。</p>
       <section className="admin-panel admin-panel--flush" aria-label="员工分配列表">
         <div className="table-scroll">
