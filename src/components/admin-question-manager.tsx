@@ -22,7 +22,7 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
 
-  const openNew = () => setEditing({ id: '', category: categories[0]?.id ?? '', type: 'single', prompt: '', options: defaultOptions(), explanation: '', difficulty: 'easy', active: true })
+  const openNew = () => setEditing({ id: '', category: categoryItems[0]?.id ?? '', type: 'single', prompt: '', options: defaultOptions(), explanation: '', difficulty: 'easy', active: true })
   const openEdit = (question: Question) => setEditing({ ...question, options: question.options?.length ? question.options : defaultOptions() })
 
   const saveCategory = async (formData: FormData) => {
