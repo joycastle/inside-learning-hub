@@ -21,11 +21,11 @@ export default async function SettingsPage() {
       <div className="settings-grid">
         {isSuperAdmin ? <AdminManagerSettings initialOrganization={organization} currentUserId={user.id} /> : <section className="admin-panel settings-panel settings-panel--wide"><div className="settings-panel__heading"><div><h2>管理员配置</h2><p>仅超级管理员可以变更</p></div></div><p className="permission-note">当前账号没有修改管理员权限的能力。</p></section>}
         <section className="admin-panel settings-panel">
-          <div className="settings-panel__heading"><div><h2>飞书组织同步</h2><p>登录与员工状态事件</p></div><span className="integration-state"><CheckCircle2 size={15} aria-hidden="true" />配置就绪</span></div>
+          <div className="settings-panel__heading"><div><h2>飞书组织同步</h2><p>登录并读取员工与部门信息</p></div><span className="integration-state"><CheckCircle2 size={15} aria-hidden="true" />配置就绪</span></div>
           <dl className="settings-list">
             <div><dt>OAuth 回调</dt><dd>/api/v1/auth/feishu/callback</dd></div>
-            <div><dt>事件回调</dt><dd>后端飞书事件处理器</dd></div>
-            <div><dt>租户校验</dt><dd>FEISHU_ALLOWED_TENANT_KEYS</dd></div>
+            <div><dt>同步内容</dt><dd>员工资料与组织架构</dd></div>
+            <div><dt>事件订阅</dt><dd>未启用</dd></div>
           </dl>
         </section>
         <section className="admin-panel settings-panel">

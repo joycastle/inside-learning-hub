@@ -153,8 +153,9 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
       </div>
       {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
       <div className="admin-filters admin-filters--compact">
-        <label className="admin-search-field"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索姓名或部门" /></label>
+        <label className="admin-search-field"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索培训分配记录</span><input aria-label="搜索培训分配记录" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索培训记录中的姓名或部门" /></label>
         <label><span>部门 · {syncing ? '同步中' : '飞书组织架构'}</span><SearchableSelect value={department} onChange={setDepartment} placeholder="全部部门" searchPlaceholder="搜索部门" options={[{ value: 'all', label: '全部部门' }, ...organization.departments.map((item) => ({ value: item.name, label: item.name }))]} /></label>
+        <span className="admin-filter-result" role="status">显示 {visibleRecords.length} / {records.length} 条培训记录</span>
       </div>
       <section className="admin-panel department-manager" aria-label="员工部门归属">
         <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div><span className="definition-note">共 {organization.employees.length} 人</span></div>
@@ -195,6 +196,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
                   <td><button className="table-button" type="button" onClick={() => setAdjustRecord(record)}>调整分配</button></td>
                 </tr>
               ))}
+              {!visibleRecords.length ? <tr><td colSpan={8}><p className="employee-picker__empty" role="status">{query.trim() || department !== 'all' ? '没有找到匹配的培训分配记录' : '暂无培训分配记录'}</p></td></tr> : null}
             </tbody>
           </table>
         </div>

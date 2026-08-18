@@ -22,13 +22,10 @@ export function assertProductionConfig() {
   const appUrl = required('APP_URL', errors)
   if (appUrl && !appUrl.startsWith('https://')) errors.push('APP_URL 必须使用 HTTPS')
 
-  for (const name of ['SESSION_SECRET', 'PAYLOAD_SECRET', 'DATABASE_URL', 'FEISHU_APP_ID', 'FEISHU_APP_SECRET', 'FEISHU_VERIFICATION_TOKEN']) {
+  for (const name of ['SESSION_SECRET', 'PAYLOAD_SECRET', 'DATABASE_URL', 'FEISHU_APP_ID', 'FEISHU_APP_SECRET']) {
     const value = required(name, errors)
     if (value && insecureDefaults.has(value)) errors.push(`${name} 仍在使用开发默认值`)
   }
-
-  const tenantKeys = process.env.FEISHU_ALLOWED_TENANT_KEYS?.trim() || process.env.FEISHU_TENANT_KEY?.trim()
-  if (!tenantKeys) errors.push('FEISHU_ALLOWED_TENANT_KEYS 或 FEISHU_TENANT_KEY 至少配置一个')
 
   if (process.env.MINIO_ENABLED === 'true') {
     for (const name of ['MINIO_ENDPOINT', 'MINIO_ACCESS_KEY', 'MINIO_SECRET_KEY', 'MINIO_BUCKET']) {
