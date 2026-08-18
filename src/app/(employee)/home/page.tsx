@@ -23,7 +23,10 @@ export default async function HomePage() {
     return <div className="page-container main-content"><section className="surface empty-state"><h1 className="page-heading">培训尚未分配</h1><p>管理员完成培训分配后会显示在这里。</p></section></div>
   }
   const onboardingCourse = onboardingPath.courses[0]
-  const onboardingVideo = onboardingCourse.units[0]
+  const onboardingVideo = onboardingCourse?.units[0]
+  if (!onboardingCourse || !onboardingVideo) {
+    return <div className="page-container main-content"><section className="surface empty-state"><h1 className="page-heading">培训内容准备中</h1><p>当前培训路径还没有配置学习单元，请联系管理员补充课程内容。</p></section></div>
+  }
 
   return (
     <>
