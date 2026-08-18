@@ -7,6 +7,14 @@ import { getAnnouncements, getServiceArticles } from '@/lib/api/server'
 
 export const metadata = { title: '首页' }
 
+const formatHomeDate = () => {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Shanghai', weekday: 'short', month: 'numeric', day: 'numeric' }).formatToParts(new Date())
+  const weekday = parts.find((part) => part.type === 'weekday')?.value.toUpperCase() ?? ''
+  const month = parts.find((part) => part.type === 'month')?.value ?? ''
+  const day = parts.find((part) => part.type === 'day')?.value ?? ''
+  return `${weekday} · ${month} / ${day}`
+}
+
 export default async function HomePage() {
   const user = await requireUser()
   const [onboardingPath] = await getEnrollments()
@@ -36,7 +44,7 @@ export default async function HomePage() {
             <h1 className="page-heading">早上好，{user.name}</h1>
             <p className="page-description">入职介绍视频还没看完，从上次位置继续即可。</p>
           </div>
-          <span className="home-welcome__date">FRI · 8 / 14</span>
+          <span className="home-welcome__date">{formatHomeDate()}</span>
         </header>
 
         <OnboardingVideoCard

@@ -18,7 +18,7 @@ export default async function VideoAnalyticsPage({ params }: { params: Promise<{
         eyebrow="视频学习统计"
         title={video.title}
         description={`最近观看 ${formatDateTime(video.lastWatchedAt)}。达到 90% 记为完播，统计用于培训运营。`}
-        actions={<button className="button button--secondary" type="button"><Download size={16} aria-hidden="true" />导出名单</button>}
+        actions={<a className="button button--secondary" href={`/api/v1/admin/exports/videos/${videoId}.csv`}><Download size={16} aria-hidden="true" />导出名单</a>}
       />
       <section className="metric-strip metric-strip--six" aria-label="视频学习指标">
         <div className="metric-item"><span>应学习人数</span><strong className="tabular">{video.assigned}<small>人</small></strong></div>
