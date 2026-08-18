@@ -33,6 +33,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
   const [departmentSavingId, setDepartmentSavingId] = useState<string | null>(null)
   const [departmentName, setDepartmentName] = useState('')
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState('')
 
   const visibleRecords = useMemo(() => records.filter((record) => {
     const matchesQuery = !query || `${record.userName} ${record.departmentName}`.toLowerCase().includes(query.toLowerCase())
@@ -166,8 +167,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       </section>
       <section className="admin-panel department-manager department-catalog" aria-label="部门管理">
         <div className="settings-panel__heading"><div><h2>部门管理</h2><p>维护可分配给员工的部门。删除前需要先移走该部门的员工。</p></div></div>
-        <div className="department-catalog__form"><input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder="输入部门名称" /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
-        <div className="department-catalog__list">{organization.departments.map((item) => <div key={item.id}><span>{item.name}</span><span><button className="table-icon-button" type="button" aria-label={`编辑${item.name}`} onClick={() => { setEditingDepartmentId(item.id); setDepartmentName(item.name) }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label={`删除${item.name}`} onClick={() => void removeDepartment(item.id, item.name)}><Trash2 size={15} aria-hidden="true" /></button></span></div>)}</div>
+        <div className="department-catalog__form"><select className="form-control" value={selectedDepartmentId} onChange={(event) => setSelectedDepartmentId(event.target.value)}><option value="">选择已有部门</option>{organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select>{selectedDepartmentId ? <><button className="table-icon-button" type="button" aria-label="编辑所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) { setEditingDepartmentId(item.id); setDepartmentName(item.name) } }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label="删除所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) void removeDepartment(item.id, item.name) }}><Trash2 size={15} aria-hidden="true" /></button></> : null}<input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder={editingDepartmentId ? '修改部门名称' : '输入新部门名称'} /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
       </section>
       <p className="definition-note definition-note--block"><CalendarClock size={14} aria-hidden="true" />“调整分配”用于修改截止日期或追加课程，不会清空员工已有学习进度。</p>
       <section className="admin-panel admin-panel--flush" aria-label="员工分配列表">
@@ -177,7 +177,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
             <tbody>
               {visibleRecords.map((record) => (
                 <tr key={record.userId}>
-                  <td><strong>{record.userName}</strong><small>{record.userId}</small></td>
+                  <td><strong>{record.userName}</strong></td>
                   <td>{record.departmentName}</td>
                   <td>{record.pathTitle}</td>
                   <td><span className="inline-icon"><CalendarClock size={14} aria-hidden="true" />{formatDate(record.dueAt)}</span></td>
