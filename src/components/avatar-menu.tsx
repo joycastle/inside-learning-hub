@@ -4,7 +4,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { ArrowLeftRight, LogOut, Settings, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { UserAvatar } from '@/components/user-avatar'
 import type { AppUser } from '@/lib/types'
 
@@ -19,6 +19,18 @@ export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAli
   const canAccessAdmin = user.role === 'admin' || user.role === 'superAdmin'
   const router = useRouter()
   const [loggingOut, setLoggingOut] = useState(false)
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    closeTimer.current = null
+  }
+
+  const scheduleClose = () => {
+    cancelClose()
+    closeTimer.current = setTimeout(() => setOpen(false), 120)
+  }
 
   const logout = async () => {
     if (loggingOut) return
@@ -32,12 +44,12 @@ export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAli
   }
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger className="avatar-trigger" type="button" aria-label="打开账户菜单">
+    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
+      <DropdownMenu.Trigger className="avatar-trigger" type="button" aria-label="打开账户菜单" onMouseEnter={() => { cancelClose(); setOpen(true) }} onMouseLeave={scheduleClose}>
         <UserAvatar user={user} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="menu-content" side={menuSide} sideOffset={8} align={menuAlign}>
+        <DropdownMenu.Content className="menu-content" side={menuSide} sideOffset={8} align={menuAlign} onMouseEnter={cancelClose} onMouseLeave={scheduleClose}>
           <DropdownMenu.Label className="menu-label">
             <UserAvatar user={user} />
             <span><strong>{user.name}</strong>{user.departmentName} · 飞书账号</span>
