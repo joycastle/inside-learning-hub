@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarClock, Plus, Search } from 'lucide-react'
+import { CalendarClock, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { StatusBadge } from '@/components/status-badge'
@@ -31,6 +31,8 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
   const [departmentQuery, setDepartmentQuery] = useState('')
   const [feedback, setFeedback] = useState('')
   const [departmentSavingId, setDepartmentSavingId] = useState<string | null>(null)
+  const [departmentName, setDepartmentName] = useState('')
+  const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
 
   const visibleRecords = useMemo(() => records.filter((record) => {
     const matchesQuery = !query || `${record.userName} ${record.departmentName}`.toLowerCase().includes(query.toLowerCase())
@@ -111,6 +113,24 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
     setFeedback(`已更新${employee?.name ?? '员工'}的部门。`)
   }
 
+  const saveDepartment = async () => {
+    const name = departmentName.trim()
+    if (!name) return setFeedback('请填写部门名称。')
+    const response = await fetch(editingDepartmentId ? `/api/v1/admin/departments/${editingDepartmentId}` : '/api/v1/admin/departments', {
+      method: editingDepartmentId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', Origin: window.location.origin },
+      body: JSON.stringify({ name }),
+    })
+    if (!response.ok) { const error = await response.json().catch(() => ({})) as { message?: string }; setFeedback(error.message ?? '部门保存失败，请稍后重试。'); return }
+    setDepartmentName(''); setEditingDepartmentId(null); await sync(); setFeedback(`已${editingDepartmentId ? '修改' : '新增'}部门。`)
+  }
+
+  const removeDepartment = async (id: string, name: string) => {
+    if (!window.confirm(`确定删除“${name}”吗？已分配员工的部门不能删除。`)) return
+    const response = await fetch(`/api/v1/admin/departments/${id}`, { method: 'DELETE', headers: { Origin: window.location.origin } })
+    if (!response.ok) { const error = await response.json().catch(() => ({})) as { message?: string }; setFeedback(error.message ?? '部门删除失败，请稍后重试。'); return }
+    await sync(); setFeedback(`已删除部门“${name}”。`)
+  }
+
   return (
     <>
       <div className="admin-page-actions admin-page-actions--standalone">
@@ -143,6 +163,11 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
             </tbody>
           </table>
         </div>
+      </section>
+      <section className="admin-panel department-manager department-catalog" aria-label="部门管理">
+        <div className="settings-panel__heading"><div><h2>部门管理</h2><p>维护可分配给员工的部门。删除前需要先移走该部门的员工。</p></div></div>
+        <div className="department-catalog__form"><input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder="输入部门名称" /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
+        <div className="department-catalog__list">{organization.departments.map((item) => <div key={item.id}><span>{item.name}</span><span><button className="table-icon-button" type="button" aria-label={`编辑${item.name}`} onClick={() => { setEditingDepartmentId(item.id); setDepartmentName(item.name) }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label={`删除${item.name}`} onClick={() => void removeDepartment(item.id, item.name)}><Trash2 size={15} aria-hidden="true" /></button></span></div>)}</div>
       </section>
       <p className="definition-note definition-note--block"><CalendarClock size={14} aria-hidden="true" />“调整分配”用于修改截止日期或追加课程，不会清空员工已有学习进度。</p>
       <section className="admin-panel admin-panel--flush" aria-label="员工分配列表">
