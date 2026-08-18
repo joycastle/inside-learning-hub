@@ -1,8 +1,8 @@
-import { Bell } from 'lucide-react'
 import { AvatarMenu } from '@/components/avatar-menu'
 import { BrandMark } from '@/components/brand-mark'
 import { EmployeeNav } from '@/components/employee-nav'
 import { HeaderSearch } from '@/components/header-search'
+import { NotificationPanel } from '@/components/notification-panel'
 import { ThemeToggle } from '@/components/theme-toggle'
 import type { AppUser } from '@/lib/types'
 
@@ -17,9 +17,7 @@ export function EmployeeShell({ user, children }: { user: AppUser; children: Rea
           </div>
           <div className="header-actions">
             <HeaderSearch />
-            <button className="icon-button" type="button" aria-label="通知">
-              <Bell size={19} strokeWidth={1.8} aria-hidden="true" />
-            </button>
+            <NotificationPanel />
             <ThemeToggle />
             <AvatarMenu user={user} />
           </div>

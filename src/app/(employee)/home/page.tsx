@@ -3,13 +3,14 @@ import { OnboardingVideoCard } from '@/components/onboarding-video-card'
 import { WelcomeEnvelope } from '@/components/welcome-envelope'
 import { requireUser } from '@/lib/auth'
 import { getEnrollments } from '@/lib/api/server'
-import { serviceArticles } from '@/lib/static-service-content'
+import { getAnnouncements, getServiceArticles } from '@/lib/api/server'
 
 export const metadata = { title: '首页' }
 
 export default async function HomePage() {
   const user = await requireUser()
   const [onboardingPath] = await getEnrollments()
+  const [announcements, serviceArticles] = await Promise.all([getAnnouncements(), getServiceArticles()])
   if (!onboardingPath) {
     return <div className="page-container main-content"><section className="surface empty-state"><h1 className="page-heading">培训尚未分配</h1><p>管理员完成培训分配后会显示在这里。</p></section></div>
   }
@@ -23,10 +24,10 @@ export default async function HomePage() {
         <div className="notice-strip">
           <div className="notice-strip__copy">
             <span className="notice-strip__dot" aria-hidden="true" />
-            <span><strong>本周必读 ·</strong> 2026 年差旅与费用报销规范已更新</span>
+            <span><strong>本周必读 ·</strong> {announcements[0]?.summary ?? '暂无最新公告'}</span>
           </div>
           <div className="notice-strip__actions">
-            <Link href="/services">查看说明 →</Link>
+            <Link href={announcements[0]?.targetUrl ?? '/services'}>查看说明 →</Link>
           </div>
         </div>
 

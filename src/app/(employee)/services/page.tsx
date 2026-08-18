@@ -1,9 +1,10 @@
 import { ServiceSearch } from '@/components/service-search'
-import { serviceArticles } from '@/lib/static-service-content'
+import { getServiceArticles } from '@/lib/api/server'
 
 export const metadata = { title: '员工服务' }
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const serviceArticles = await getServiceArticles()
   return (
     <div className="page-container main-content">
       <header className="services-header">

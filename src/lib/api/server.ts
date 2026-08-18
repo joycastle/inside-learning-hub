@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
-import type { AppUser, FeishuOrganization, LearningPath, TrainingRecord, VideoAnalytics } from '@/lib/types'
+import type { AppUser, FeishuOrganization, LearningPath, ServiceArticle, TrainingRecord, VideoAnalytics } from '@/lib/types'
 
 export class ApiClientError extends Error {
   constructor(public status: number, message: string, public code?: string) {
@@ -35,6 +35,12 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 export const getCurrentUserFromApi = async () => (await apiRequest<{ user: AppUser }>('/auth/me')).user
 export const getEnrollments = async () => (await apiRequest<ListResponse<LearningPath>>('/learning/enrollments')).items
 export const getAdminTrainingPaths = async () => (await apiRequest<ListResponse<LearningPath>>('/admin/training/paths')).items
+type Announcement = { id: string | number; title: string; summary: string; body: string; targetUrl?: string; startsAt?: string; endsAt?: string }
+export const getAnnouncements = async () => (await apiRequest<ListResponse<Announcement>>('/content/announcements')).items
+export const getServiceArticles = async (): Promise<ServiceArticle[]> => {
+  const items = await apiRequest<ListResponse<Record<string, any>>>('/content/knowledge-articles')
+  return items.items.map((item) => ({ id: String(item.id), category: item.category === '行政' || item.category === 'IT' ? item.category : 'HR', title: String(item.title ?? ''), summary: String(item.summary ?? ''), type: item.externalUrl ? 'externalLink' : item.html ? 'article' : 'article', updatedAt: String(item.updatedAt ?? new Date().toISOString()), url: item.externalUrl, tags: Array.isArray(item.tags) ? item.tags.map(String) : [], source: item.source, sections: item.body ? [{ title: '正文', paragraphs: [String(item.body)] }] : undefined }))
+}
 export const getEnrollment = (id: string) => apiRequest<LearningPath>(`/learning/enrollments/${id}`)
 export const getQuizAttempts = async () => (await apiRequest<ListResponse<Record<string, unknown>>>('/me/quiz-attempts')).items
 

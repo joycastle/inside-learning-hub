@@ -1,12 +1,12 @@
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { serviceArticles } from '@/lib/static-service-content'
+import { getServiceArticles } from '@/lib/api/server'
 import { formatDate } from '@/lib/format'
 
 export default async function ServiceArticlePage({ params }: { params: Promise<{ articleId: string }> }) {
   const { articleId } = await params
-  const article = serviceArticles.find((item) => item.id === articleId)
+  const article = (await getServiceArticles()).find((item) => item.id === articleId)
   if (!article) notFound()
 
   return (
