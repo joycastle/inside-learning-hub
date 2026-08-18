@@ -27,6 +27,7 @@ export function QuizPanel({ unitId }: { unitId: string }) {
       })
       if (!response.ok) throw new Error('暂时无法生成测评，请稍后重试。')
       const payload = (await response.json()) as QuizAttemptPayload
+      if (!payload.attemptId || !payload.questions?.length) throw new Error('当前没有可用题目，请联系管理员补充题库。')
       setAttempt(payload)
       setCurrentIndex(0)
       setAnswers({})

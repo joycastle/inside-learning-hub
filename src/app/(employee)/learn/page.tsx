@@ -7,7 +7,8 @@ export default async function LearnPage() {
   const [onboardingPath] = await getEnrollments()
   if (!onboardingPath) return <div className="page-container main-content"><section className="surface empty-state"><h1 className="page-heading">暂无培训</h1><p>当前账号还没有已分配的学习路径。</p></section></div>
   const onboardingCourse = onboardingPath.courses[0]
-  const onboardingVideo = onboardingCourse.units[0]
+  const onboardingVideo = onboardingCourse?.units[0]
+  if (!onboardingCourse || !onboardingVideo) return <div className="page-container main-content"><section className="surface empty-state"><h1 className="page-heading">培训内容准备中</h1><p>当前培训路径还没有配置学习单元，请联系管理员补充课程内容。</p></section></div>
 
   return (
     <div className="page-container main-content">
