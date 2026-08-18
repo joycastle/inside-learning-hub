@@ -45,7 +45,7 @@ export function AvatarMenu({ user, inAdmin = false, menuSide = 'bottom', menuAli
 
   return (
     <DropdownMenu.Root open={open} onOpenChange={setOpen}>
-      <DropdownMenu.Trigger className="avatar-trigger" type="button" aria-label="打开账户菜单" onMouseEnter={() => { cancelClose(); setOpen(true) }} onMouseLeave={scheduleClose}>
+      <DropdownMenu.Trigger className="avatar-trigger" type="button" aria-label="打开账户菜单" onMouseEnter={cancelClose} onMouseLeave={scheduleClose}>
         <UserAvatar user={user} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
