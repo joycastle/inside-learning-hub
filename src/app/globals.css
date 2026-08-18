@@ -398,6 +398,47 @@ a {
   background: var(--paper-0);
 }
 
+.department-manager {
+  margin-top: 18px;
+}
+
+.department-manager__search {
+  max-width: 440px;
+  margin: 12px 0 4px;
+}
+
+.department-manager__table-wrap {
+  max-height: min(560px, 60vh);
+  overflow: auto;
+  border-top: 1px solid var(--border);
+}
+
+.department-manager__table td:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.department-manager__table td:first-child small {
+  color: var(--text-muted);
+}
+
+.department-catalog__form { display: flex; align-items: center; gap: 10px; max-width: 980px; margin: 12px 0 16px; }
+.department-catalog__form .form-control { flex: 1; }
+
+@media (max-width: 640px) {
+  .department-catalog__form { flex-wrap: wrap; }
+  .department-catalog__form .form-control { flex-basis: 100%; }
+  .department-manager__table th:nth-child(2),
+  .department-manager__table td:nth-child(2) {
+    display: none;
+  }
+
+  .department-manager__table th,
+  .department-manager__table td {
+    padding: 10px 8px;
+  }
+}
+
 .menu-label {
   display: flex;
   align-items: center;
