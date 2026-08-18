@@ -28,6 +28,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
   const [adjustRecord, setAdjustRecord] = useState<TrainingRecord | null>(null)
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
   const [employeeQuery, setEmployeeQuery] = useState('')
+  const [departmentQuery, setDepartmentQuery] = useState('')
   const [feedback, setFeedback] = useState('')
   const [departmentSavingId, setDepartmentSavingId] = useState<string | null>(null)
 
@@ -39,6 +40,8 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
 
   const normalizedEmployeeQuery = employeeQuery.trim().toLocaleLowerCase('zh-CN')
   const visibleEmployees = organization.employees.filter((employee) => !normalizedEmployeeQuery || `${employee.name} ${employee.departmentName} ${employee.email ?? ''}`.toLocaleLowerCase('zh-CN').includes(normalizedEmployeeQuery))
+  const normalizedDepartmentQuery = departmentQuery.trim().toLocaleLowerCase('zh-CN')
+  const visibleDepartmentEmployees = organization.employees.filter((employee) => !normalizedDepartmentQuery || `${employee.name} ${employee.departmentName} ${employee.email ?? ''}`.toLocaleLowerCase('zh-CN').includes(normalizedDepartmentQuery))
 
   const closeAssignDialog = () => {
     setAssignOpen(false)
@@ -122,15 +125,23 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
         <label><span>部门 · {syncing ? '同步中' : '飞书组织架构'}</span><select className="form-control" value={department} onChange={(event) => setDepartment(event.target.value)}><option value="all">全部部门</option>{organization.departments.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></label>
       </div>
       <section className="admin-panel department-manager" aria-label="员工部门归属">
-        <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div></div>
-        <div className="department-manager__list">
-          {organization.employees.map((employee) => <div className="department-manager__row" key={employee.id}>
-            <span><strong>{employee.name}</strong><small>{employee.email ?? '未填写邮箱'}</small></span>
-            <select className="form-control" value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(event) => void updateDepartment(employee.id, event.target.value)}>
-              <option value="unassigned">未分配部门</option>
-              {organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-            </select>
-          </div>)}
+        <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div><span className="definition-note">共 {organization.employees.length} 人</span></div>
+        <label className="admin-search-field department-manager__search"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索员工</span><input type="search" value={departmentQuery} onChange={(event) => setDepartmentQuery(event.target.value)} placeholder="搜索姓名、邮箱或当前部门" /></label>
+        <div className="department-manager__table-wrap">
+          <table className="data-table department-manager__table">
+            <thead><tr><th>员工</th><th>当前部门</th><th>分配部门</th></tr></thead>
+            <tbody>
+              {visibleDepartmentEmployees.map((employee) => <tr key={employee.id}>
+                <td><strong>{employee.name}</strong><small>{employee.email ?? '未填写邮箱'}</small></td>
+                <td>{employee.departmentName || '未分配部门'}</td>
+                <td><select className="form-control" value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(event) => void updateDepartment(employee.id, event.target.value)}>
+                  <option value="unassigned">未分配部门</option>
+                  {organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
+                </select></td>
+              </tr>)}
+              {!visibleDepartmentEmployees.length ? <tr><td colSpan={3}><p className="employee-picker__empty" role="status">没有找到匹配的员工</p></td></tr> : null}
+            </tbody>
+          </table>
         </div>
       </section>
       <p className="definition-note definition-note--block"><CalendarClock size={14} aria-hidden="true" />“调整分配”用于修改截止日期或追加课程，不会清空员工已有学习进度。</p>
