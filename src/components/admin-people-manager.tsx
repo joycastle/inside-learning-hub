@@ -6,6 +6,7 @@ import { AdminDialog } from '@/components/admin-dialog'
 import { StatusBadge } from '@/components/status-badge'
 import { formatDate } from '@/lib/format'
 import { useFeishuOrganization } from '@/lib/use-feishu-organization'
+import { SearchableSelect } from '@/components/searchable-select'
 import type { FeishuOrganization, LearningPath, TrainingRecord } from '@/lib/types'
 
 export interface AdminPeopleManagerProps {
@@ -35,6 +36,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
   const [departmentName, setDepartmentName] = useState('')
   const [editingDepartmentId, setEditingDepartmentId] = useState<string | null>(null)
   const [selectedDepartmentId, setSelectedDepartmentId] = useState('')
+  const [selectedPathId, setSelectedPathId] = useState(initialRecords[0]?.pathId ?? availablePaths[0]?.id ?? '')
 
   const visibleRecords = useMemo(() => records.filter((record) => {
     const matchesQuery = !query || `${record.userName} ${record.departmentName}`.toLowerCase().includes(query.toLowerCase())
@@ -152,7 +154,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
       {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
       <div className="admin-filters admin-filters--compact">
         <label className="admin-search-field"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索姓名或部门" /></label>
-        <label><span>部门 · {syncing ? '同步中' : '飞书组织架构'}</span><select className="form-control" value={department} onChange={(event) => setDepartment(event.target.value)}><option value="all">全部部门</option>{organization.departments.map((item) => <option value={item.name} key={item.id}>{item.name}</option>)}</select></label>
+        <label><span>部门 · {syncing ? '同步中' : '飞书组织架构'}</span><SearchableSelect value={department} onChange={setDepartment} placeholder="全部部门" searchPlaceholder="搜索部门" options={[{ value: 'all', label: '全部部门' }, ...organization.departments.map((item) => ({ value: item.name, label: item.name }))]} /></label>
       </div>
       <section className="admin-panel department-manager" aria-label="员工部门归属">
         <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div><span className="definition-note">共 {organization.employees.length} 人</span></div>
@@ -164,10 +166,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
               {visibleDepartmentEmployees.map((employee) => <tr key={employee.id}>
                 <td><strong>{employee.name}</strong><small>{employee.email ?? '未填写邮箱'}</small></td>
                 <td>{employee.departmentName || '未分配部门'}</td>
-                <td><select className="form-control" value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(event) => void updateDepartment(employee.id, event.target.value)}>
-                  <option value="unassigned">未分配部门</option>
-                  {organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-                </select></td>
+                <td><SearchableSelect value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(value) => void updateDepartment(employee.id, value)} placeholder="未分配部门" searchPlaceholder="搜索部门" options={[{ value: 'unassigned', label: '未分配部门' }, ...organization.departments.map((item) => ({ value: item.id, label: item.name }))]} /></td>
               </tr>)}
               {!visibleDepartmentEmployees.length ? <tr><td colSpan={3}><p className="employee-picker__empty" role="status">没有找到匹配的员工</p></td></tr> : null}
             </tbody>
@@ -176,7 +175,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
       </section>
       <section className="admin-panel department-manager department-catalog" aria-label="部门管理">
         <div className="settings-panel__heading"><div><h2>部门管理</h2><p>维护可分配给员工的部门。删除前需要先移走该部门的员工。</p></div></div>
-        <div className="department-catalog__form"><select className="form-control" value={selectedDepartmentId} onChange={(event) => setSelectedDepartmentId(event.target.value)}><option value="">选择已有部门</option>{organization.departments.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select>{selectedDepartmentId ? <><button className="table-icon-button" type="button" aria-label="编辑所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) { setEditingDepartmentId(item.id); setDepartmentName(item.name) } }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label="删除所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) void removeDepartment(item.id, item.name) }}><Trash2 size={15} aria-hidden="true" /></button></> : null}<input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder={editingDepartmentId ? '修改部门名称' : '输入新部门名称'} /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
+        <div className="department-catalog__form"><SearchableSelect value={selectedDepartmentId} onChange={setSelectedDepartmentId} placeholder="选择已有部门" searchPlaceholder="搜索部门" options={organization.departments.map((item) => ({ value: item.id, label: item.name }))} />{selectedDepartmentId ? <><button className="table-icon-button" type="button" aria-label="编辑所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) { setEditingDepartmentId(item.id); setDepartmentName(item.name) } }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label="删除所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) void removeDepartment(item.id, item.name) }}><Trash2 size={15} aria-hidden="true" /></button></> : null}<input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder={editingDepartmentId ? '修改部门名称' : '输入新部门名称'} /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
       </section>
       <p className="definition-note definition-note--block"><CalendarClock size={14} aria-hidden="true" />“调整分配”用于修改截止日期或追加课程，不会清空员工已有学习进度。</p>
       <section className="admin-panel admin-panel--flush" aria-label="员工分配列表">
@@ -211,7 +210,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
       >
         <form className="admin-form" id="assign-training-form" action={assignTraining}>
           <div className="admin-form__grid">
-            <label><span>培训路径</span><select className="form-control" name="pathId" defaultValue={initialRecords[0]?.pathId ?? availablePaths[0]?.id} required>{availablePaths.map((path) => <option value={path.id} key={path.id}>{path.title}</option>)}</select></label>
+            <label><span>培训路径</span><SearchableSelect name="pathId" required value={selectedPathId} onChange={setSelectedPathId} placeholder="请选择培训路径" searchPlaceholder="搜索培训路径" options={availablePaths.map((path) => ({ value: path.id, label: path.title }))} /></label>
           </div>
           <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={getDefaultDueDate()} required /></label>
           <fieldset className="employee-picker">

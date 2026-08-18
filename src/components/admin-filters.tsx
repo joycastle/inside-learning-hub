@@ -3,6 +3,7 @@
 import { Search } from 'lucide-react'
 import { useState } from 'react'
 import { useFeishuOrganization } from '@/lib/use-feishu-organization'
+import { SearchableSelect } from '@/components/searchable-select'
 import type { FeishuOrganization } from '@/lib/types'
 
 export interface AdminFiltersProps {
@@ -36,6 +37,8 @@ export function AdminFilters({ organization: initialOrganization, showSearch = f
   const defaultRange = getDefaultRange()
   const [dateFrom, setDateFrom] = useState(defaults?.dateFrom ?? defaultRange.dateFrom)
   const [dateTo, setDateTo] = useState(defaults?.dateTo ?? defaultRange.dateTo)
+  const [department, setDepartment] = useState(defaults?.department ?? 'all')
+  const [path, setPath] = useState(defaults?.path ?? 'onboarding')
   const { organization, syncing } = useFeishuOrganization(initialOrganization)
 
   return (
@@ -57,16 +60,11 @@ export function AdminFilters({ organization: initialOrganization, showSearch = f
       </fieldset>
       <label>
         <span>部门 · {syncing ? '同步中' : '飞书组织架构'}</span>
-        <select className="form-control" name="department" defaultValue={defaults?.department ?? 'all'}>
-          <option value="all">全部部门</option>
-          {organization.departments.map((department) => <option value={department.name} key={department.id}>{department.name}</option>)}
-        </select>
+        <SearchableSelect name="department" value={department} onChange={setDepartment} placeholder="全部部门" searchPlaceholder="搜索部门" options={[{ value: 'all', label: '全部部门' }, ...organization.departments.map((item) => ({ value: item.name, label: item.name }))]} />
       </label>
       <label>
         <span>培训路径</span>
-        <select className="form-control" name="path" defaultValue={defaults?.path ?? 'onboarding'}>
-          <option value="onboarding">新员工入职学习路径</option>
-        </select>
+        <SearchableSelect name="path" value={path} onChange={setPath} placeholder="请选择培训路径" searchPlaceholder="搜索培训路径" options={[{ value: 'onboarding', label: '新员工入职学习路径' }]} />
       </label>
       <button className="button button--secondary" type="submit">应用筛选</button>
     </form>

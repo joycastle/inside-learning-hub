@@ -23,7 +23,11 @@ export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
   if (type === 'html') {
     return (
       <div className="document-preview">
-        <iframe className="document-preview__frame document-preview__frame--html" title={`${title} HTML 预览`} src={url} sandbox="allow-same-origin" />
+        {/*
+         * HTML 讲义常包含目录切换、交互图表等脚本。允许脚本但不授予
+         * same-origin，避免上传内容读取主站 cookie 或操作主页面。
+         */}
+        <iframe className="document-preview__frame document-preview__frame--html" title={`${title} HTML 预览`} src={url} sandbox="allow-scripts allow-forms allow-popups" />
         <a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">在新窗口打开 HTML 讲义<ExternalLink size={14} aria-hidden="true" /></a>
       </div>
     )

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="zh-CN" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: "try{const n=localStorage.getItem('lebao-theme-v2')||'light';document.documentElement.dataset.theme=n;document.documentElement.style.colorScheme=n}catch(e){}" }} />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {"try{const n=localStorage.getItem('lebao-theme-v2')||'light';document.documentElement.dataset.theme=n;document.documentElement.style.colorScheme=n}catch(e){}"}
+        </Script>
       </head>
       <body>
         <template dangerouslySetInnerHTML={{ __html: designContract }} />

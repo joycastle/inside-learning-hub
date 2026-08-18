@@ -3,6 +3,7 @@
 import { FileUp, Plus, Trash2 } from 'lucide-react'
 import { useState, type ChangeEvent } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
+import { SearchableSelect } from '@/components/searchable-select'
 
 type Option = { optionId: string; label: string; correct: boolean }
 type Question = { id: string | number; category?: string | number | { id?: string | number }; type?: string; prompt?: string; options?: Option[]; explanation?: string; difficulty?: string; active?: boolean }
@@ -114,7 +115,7 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
             <label><span>题目类型</span><select className="form-control" name="type" value={editing.type ?? 'single'} onChange={(event) => setEditing({ ...editing, type: event.target.value })}><option value="single">单选题</option><option value="multiple">多选题</option><option value="trueFalse">判断题</option></select></label>
             <label><span>难度</span><select className="form-control" name="difficulty" value={editing.difficulty ?? 'easy'} onChange={(event) => setEditing({ ...editing, difficulty: event.target.value })}><option value="easy">简单</option><option value="medium">中等</option><option value="hard">困难</option></select></label>
           </div>
-          <label><span>题目分类</span><select className="form-control" name="category" value={categoryId(editing.category)} onChange={(event) => setEditing({ ...editing, category: event.target.value })}>{categories.map((category) => <option value={category.id} key={category.id}>{category.name ?? `分类 ${category.id}`}</option>)}</select></label>
+          <label><span>题目分类</span><SearchableSelect name="category" required value={categoryId(editing.category)} onChange={(value) => setEditing({ ...editing, category: value })} placeholder="请选择题目分类" searchPlaceholder="搜索分类" options={categories.map((category) => ({ value: String(category.id), label: category.name ?? `分类 ${category.id}` }))} /></label>
           <label><span>题目内容</span><textarea className="form-control" name="prompt" value={editing.prompt ?? ''} onChange={(event) => setEditing({ ...editing, prompt: event.target.value })} required /></label>
           <fieldset className="question-option-editor"><legend>选项（勾选正确答案）</legend>{(editing.options ?? defaultOptions()).map((option, index) => <label className="question-option-row" key={option.optionId}><input type="checkbox" checked={option.correct} onChange={(event) => setEditing({ ...editing, options: (editing.options ?? defaultOptions()).map((current, currentIndex) => currentIndex === index ? { ...current, correct: event.target.checked } : current) })} /><span>{String.fromCharCode(65 + index)}</span><input className="form-control" value={option.label} onChange={(event) => setEditing({ ...editing, options: (editing.options ?? defaultOptions()).map((current, currentIndex) => currentIndex === index ? { ...current, label: event.target.value } : current) })} placeholder={`选项 ${index + 1}`} required /></label>)}</fieldset>
           <label><span>答案解析</span><textarea className="form-control" name="explanation" value={editing.explanation ?? ''} onChange={(event) => setEditing({ ...editing, explanation: event.target.value })} required /></label>
