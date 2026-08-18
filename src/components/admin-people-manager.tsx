@@ -6,11 +6,12 @@ import { AdminDialog } from '@/components/admin-dialog'
 import { StatusBadge } from '@/components/status-badge'
 import { formatDate } from '@/lib/format'
 import { useFeishuOrganization } from '@/lib/use-feishu-organization'
-import type { FeishuOrganization, TrainingRecord } from '@/lib/types'
+import type { FeishuOrganization, LearningPath, TrainingRecord } from '@/lib/types'
 
 export interface AdminPeopleManagerProps {
   initialRecords: TrainingRecord[]
   initialOrganization: FeishuOrganization
+  availablePaths: LearningPath[]
 }
 
 const getDefaultDueDate = () => {
@@ -19,7 +20,7 @@ const getDefaultDueDate = () => {
   return date.toISOString().slice(0, 10)
 }
 
-export function AdminPeopleManager({ initialRecords, initialOrganization }: AdminPeopleManagerProps) {
+export function AdminPeopleManager({ initialRecords, initialOrganization, availablePaths }: AdminPeopleManagerProps) {
   const [records, setRecords] = useState(initialRecords)
   const { organization, syncing, sync } = useFeishuOrganization(initialOrganization)
   const [query, setQuery] = useState('')
@@ -62,17 +63,21 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       setFeedback('当前没有可分配的培训路径，请先在内容后台发布并配置默认路径。')
       return
     }
-    const response = await fetch('/api/v1/admin/enrollments/batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
-      body: JSON.stringify({ userIds: selectedEmployeeIds, learningPathId: pathId, dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
-    })
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({})) as { message?: string }
-      setFeedback(error.message ?? '培训分配失败，请稍后重试。')
-      return
+    try {
+      const response = await fetch('/api/v1/admin/enrollments/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify({ userIds: selectedEmployeeIds, learningPathId: pathId, dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { message?: string }
+        setFeedback(error.message ?? '培训分配失败，请稍后重试。')
+        return
+      }
+      window.location.reload()
+    } catch {
+      setFeedback('网络异常，培训分配失败，请稍后重试。')
     }
-    window.location.reload()
   }
 
   const adjustAssignment = async (formData: FormData) => {
@@ -82,18 +87,22 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       setFeedback('缺少培训记录标识，请刷新页面后重试。')
       return
     }
-    const response = await fetch(`/api/v1/admin/enrollments/${adjustRecord.enrollmentId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
-    })
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({})) as { message?: string }
-      setFeedback(error.message ?? '调整失败，请稍后重试。')
-      return
+    try {
+      const response = await fetch(`/api/v1/admin/enrollments/${adjustRecord.enrollmentId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { message?: string }
+        setFeedback(error.message ?? '调整失败，请稍后重试。')
+        return
+      }
+      setRecords((current) => current.map((record) => record.enrollmentId === adjustRecord.enrollmentId ? { ...record, dueAt } : record))
+      setAdjustRecord(null)
+      setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
+    } catch {
+      setFeedback('网络异常，调整失败，请稍后重试。')
     }
-    setRecords((current) => current.map((record) => record.enrollmentId === adjustRecord.enrollmentId ? { ...record, dueAt } : record))
-    setAdjustRecord(null)
-    setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
   }
 
   const updateDepartment = async (userId: string, departmentId: string) => {
@@ -202,7 +211,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization }: Admi
       >
         <form className="admin-form" id="assign-training-form" action={assignTraining}>
           <div className="admin-form__grid">
-            <label><span>培训路径</span><select className="form-control" name="pathId" defaultValue={initialRecords[0]?.pathId}>{Array.from(new Map(initialRecords.filter((record) => record.pathId).map((record) => [record.pathId, record.pathTitle]))).map(([id, title]) => <option value={id} key={id}>{title}</option>)}</select></label>
+            <label><span>培训路径</span><select className="form-control" name="pathId" defaultValue={initialRecords[0]?.pathId ?? availablePaths[0]?.id} required>{availablePaths.map((path) => <option value={path.id} key={path.id}>{path.title}</option>)}</select></label>
           </div>
           <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={getDefaultDueDate()} required /></label>
           <fieldset className="employee-picker">

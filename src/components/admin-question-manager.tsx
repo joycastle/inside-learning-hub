@@ -36,29 +36,38 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
       difficulty: String(formData.get('difficulty') ?? 'easy'),
       active: true,
     }
-    const response = await fetch(editing.id ? `/api/v1/admin/content/questions/${editing.id}` : '/api/v1/admin/content/questions', {
-      method: editing.id ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json', Origin: window.location.origin },
-      body: JSON.stringify(payload),
-    })
-    setSaving(false)
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({})) as { message?: string }
-      setFeedback(error.message ?? '保存失败，请稍后重试。')
-      return
+    try {
+      const response = await fetch(editing.id ? `/api/v1/admin/content/questions/${editing.id}` : '/api/v1/admin/content/questions', {
+        method: editing.id ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: window.location.origin },
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { message?: string }
+        setFeedback(error.message ?? '保存失败，请稍后重试。')
+        return
+      }
+      const saved = await response.json() as Question
+      setQuestions((current) => editing.id ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current])
+      setEditing(null)
+      setFeedback('题目已保存。')
+    } catch {
+      setFeedback('网络异常，保存失败，请稍后重试。')
+    } finally {
+      setSaving(false)
     }
-    const saved = await response.json() as Question
-    setQuestions((current) => editing.id ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current])
-    setEditing(null)
-    setFeedback('题目已保存。')
   }
 
   const remove = async (question: Question) => {
     if (!question.id || !window.confirm('确定删除这道题目吗？')) return
-    const response = await fetch(`/api/v1/admin/content/questions/${question.id}`, { method: 'DELETE', headers: { Origin: window.location.origin } })
-    if (!response.ok) { setFeedback('删除失败，请稍后重试。'); return }
-    setQuestions((current) => current.filter((item) => item.id !== question.id))
-    setFeedback('题目已删除。')
+    try {
+      const response = await fetch(`/api/v1/admin/content/questions/${question.id}`, { method: 'DELETE', headers: { Origin: window.location.origin } })
+      if (!response.ok) { setFeedback('删除失败，请稍后重试。'); return }
+      setQuestions((current) => current.filter((item) => item.id !== question.id))
+      setFeedback('题目已删除。')
+    } catch {
+      setFeedback('网络异常，删除失败，请稍后重试。')
+    }
   }
 
   const importCsv = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -68,12 +77,17 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
     setImporting(true)
     const form = new FormData()
     form.set('file', file)
-    const response = await fetch('/api/v1/admin/content/questions/import', { method: 'POST', headers: { Origin: window.location.origin }, body: form })
-    const result = await response.json().catch(() => ({})) as { items?: Question[]; message?: string }
-    setImporting(false)
-    if (!response.ok) { setFeedback(result.message ?? '导入失败，请检查 CSV 格式。'); return }
-    setQuestions((current) => [...(result.items ?? []), ...current])
-    setFeedback(`已导入 ${result.items?.length ?? 0} 道题目。`)
+    try {
+      const response = await fetch('/api/v1/admin/content/questions/import', { method: 'POST', headers: { Origin: window.location.origin }, body: form })
+      const result = await response.json().catch(() => ({})) as { items?: Question[]; message?: string }
+      if (!response.ok) { setFeedback(result.message ?? '导入失败，请检查 CSV 格式。'); return }
+      setQuestions((current) => [...(result.items ?? []), ...current])
+      setFeedback(`已导入 ${result.items?.length ?? 0} 道题目。`)
+    } catch {
+      setFeedback('网络异常，导入失败，请稍后重试。')
+    } finally {
+      setImporting(false)
+    }
   }
 
   return (
