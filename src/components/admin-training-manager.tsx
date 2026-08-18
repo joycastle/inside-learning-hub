@@ -5,11 +5,11 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { ProgressBar } from '@/components/progress-bar'
-import type { Course, LearningPath, LearningUnit, UnitType } from '@/lib/types'
+import type { Course, LearningPath, LearningUnit, OnboardingHandout, UnitType } from '@/lib/types'
 
 type DialogKind = 'path' | 'course' | 'unit' | null
 
-export function AdminTrainingManager({ initialPath }: { initialPath: LearningPath }) {
+export function AdminTrainingManager({ initialPath, initialHandout }: { initialPath: LearningPath; initialHandout: OnboardingHandout }) {
   const [path, setPath] = useState(initialPath)
   const [dialog, setDialog] = useState<DialogKind>(null)
   const [editingPath, setEditingPath] = useState(false)
@@ -17,6 +17,8 @@ export function AdminTrainingManager({ initialPath }: { initialPath: LearningPat
   const [editingUnit, setEditingUnit] = useState<LearningUnit | null>(null)
   const [feedback, setFeedback] = useState('')
   const [saving, setSaving] = useState(false)
+  const [handout, setHandout] = useState(initialHandout)
+  const [savingHandout, setSavingHandout] = useState(false)
 
   const openPath = (edit: boolean) => { setEditingPath(edit); setEditingCourse(null); setEditingUnit(null); setDialog('path') }
   const close = (force = false) => {
@@ -74,10 +76,55 @@ export function AdminTrainingManager({ initialPath }: { initialPath: LearningPat
     } catch { setFeedback('网络异常，培训内容保存失败，请稍后重试。') } finally { setSaving(false) }
   }
 
+  const saveHandout = async (formData: FormData) => {
+    if (savingHandout) return
+    setSavingHandout(true)
+    try {
+      const file = formData.get('handoutMedia')
+      let mediaId = handout.mediaId
+      if (file instanceof File && file.size > 0) {
+        const upload = new FormData()
+        upload.set('title', String(formData.get('handoutTitle') ?? '新人培训手册'))
+        if (handout.mediaId) upload.set('previousMediaId', handout.mediaId)
+        upload.set('file', file)
+        const uploadResponse = await fetch('/api/v1/admin/media', { method: 'POST', headers: { Origin: window.location.origin }, body: upload })
+        if (!uploadResponse.ok) {
+          const error = await uploadResponse.json().catch(() => ({})) as { message?: string }
+          setFeedback(error.message ?? '讲义上传失败，请检查文件格式或存储服务。')
+          return
+        }
+        mediaId = String((await uploadResponse.json() as { id: string | number }).id)
+      }
+      const title = String(formData.get('handoutTitle') ?? '新人培训手册').trim() || '新人培训手册'
+      const summary = String(formData.get('handoutSummary') ?? '').trim()
+      const response = await fetch('/api/v1/admin/onboarding-handout', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Origin: window.location.origin }, body: JSON.stringify({ title, summary, mediaId }) })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { message?: string }
+        setFeedback(error.message ?? '讲义设置保存失败，请稍后重试。')
+        return
+      }
+      setHandout((current) => ({ ...current, title, summary, mediaId, mediaUrl: mediaId ? `/api/v1/media/${mediaId}/file` : undefined, updatedAt: new Date().toISOString() }))
+      setFeedback('新人培训手册已保存。旧文件将在 7 天后清理。')
+    } catch {
+      setFeedback('网络异常，讲义设置保存失败，请稍后重试。')
+    } finally {
+      setSavingHandout(false)
+    }
+  }
+
   const defaultDueDays = Math.max(1, Math.round((new Date(path.dueAt).getTime() - new Date(path.assignedAt).getTime()) / 86400000))
   return <>
     <div className="admin-page-actions admin-page-actions--standalone admin-training-toolbar"><label className="compact-select-label admin-training-path-control"><span>当前培训路径</span><select className="form-control" value={path.id} disabled><option value={path.id}>{path.title}</option></select></label><button className="button button--secondary" type="button" onClick={() => openPath(true)}><Pencil size={16} aria-hidden="true" />编辑培训内容</button><button className="button button--primary" type="button" onClick={() => openPath(false)}><Plus size={16} aria-hidden="true" />新建培训路径</button></div>
     {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
+    <section className="admin-panel admin-handout-settings" aria-labelledby="handout-settings-heading">
+      <div className="panel-heading"><div><h2 id="handout-settings-heading">新人培训手册</h2><p>员工端视频下方显示的配套讲义。上传 HTML 后会替换当前版本，旧文件保留 7 天。</p></div></div>
+      <form className="admin-form admin-handout-settings__form" action={saveHandout}>
+        <label><span>讲义名称</span><input className="form-control" name="handoutTitle" defaultValue={handout.title} required /></label>
+        <label><span>讲义说明</span><input className="form-control" name="handoutSummary" defaultValue={handout.summary} /></label>
+        <label><span>替换 HTML 讲义</span><input className="form-control" name="handoutMedia" type="file" accept="text/html,.html,.htm" /><small>{handout.mediaId ? '当前已使用上传文件；不选择文件则只保存名称和说明。' : '当前未上传文件，员工端使用内置讲义；上传后将使用文件内容。'}</small></label>
+        <div><button className="button button--primary" type="submit" disabled={savingHandout}>{savingHandout ? '保存中…' : '保存讲义设置'}</button></div>
+      </form>
+    </section>
     <section className="admin-panel path-editor" aria-labelledby="path-heading"><div className="path-editor__summary"><div className="path-editor__icon"><Layers3 size={22} aria-hidden="true" /></div><div><span className="admin-page-eyebrow">当前培训路径</span><h2 id="path-heading">{path.title}</h2><p>{path.summary || '暂未填写路径说明。'}</p></div><div className="path-editor__meta"><span>{path.progress}% 已完成</span></div></div><div className="path-editor__facts"><span><strong>{path.courseCount}</strong>门课程</span><span><strong>{defaultDueDays}</strong>天默认期限</span><span><strong>{path.completedCourses}</strong>门课程已完成</span></div></section>
     <section className="admin-panel admin-panel--flush" aria-labelledby="course-heading"><div className="panel-heading panel-heading--padded"><div><h2 id="course-heading">课程与单元</h2><p>课程和资源均来自线上数据库。</p></div><button className="button button--secondary" type="button" onClick={() => { setEditingCourse(null); setEditingUnit(null); setDialog('course') }}><Plus size={16} aria-hidden="true" />添加课程</button></div><div className="management-list">{path.courses.length ? path.courses.map((course) => <div className="management-row" key={course.id}><span className="management-row__index tabular">{String(course.order).padStart(2, '0')}</span><div className="management-row__body"><strong>{course.title}</strong><p>{course.summary || '暂未填写课程说明。'}</p></div><span className="text-muted text-small">{course.unitCount} 个单元</span><div className="management-row__progress"><ProgressBar value={course.progress} label={`${course.title}完成率`} /><span className="tabular">{course.progress}%</span></div><div className="management-row__actions"><button className="table-action" type="button" onClick={() => { setEditingCourse(course); setEditingUnit(null); setDialog('course') }}><Pencil size={14} aria-hidden="true" />编辑课程</button>{course.units[0] ? <button className="table-action" type="button" onClick={() => { setEditingCourse(null); setEditingUnit(course.units[0]); setDialog('unit') }}><Pencil size={14} aria-hidden="true" />编辑培训内容</button> : null}<Link className="table-action" href={`/admin/training/preview/${course.id}`}><ArrowRight size={14} aria-hidden="true" />管理端预览</Link></div></div>) : <div className="empty-state empty-state--compact"><p>当前路径还没有课程，请先添加课程。</p></div>}</div></section>
     <AdminDialog

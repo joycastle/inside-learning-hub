@@ -1,13 +1,14 @@
 import { AdminPageHeader } from '@/components/admin-page-header'
 import { AdminTrainingManager } from '@/components/admin-training-manager'
 import { requireAdmin } from '@/lib/auth'
-import { getAdminTrainingPaths } from '@/lib/api/server'
+import { getAdminOnboardingHandout, getAdminTrainingPaths } from '@/lib/api/server'
 
 export const metadata = { title: '培训管理' }
 
 export default async function TrainingManagementPage() {
   await requireAdmin()
   const paths = await getAdminTrainingPaths()
+  const handout = await getAdminOnboardingHandout()
   const path = paths[0]
 
   return (
@@ -19,7 +20,7 @@ export default async function TrainingManagementPage() {
         actions={null}
       />
 
-      {path ? <AdminTrainingManager initialPath={path} /> : <section className="admin-panel empty-state"><p>暂无可用培训路径，请先在内容管理中创建。</p></section>}
+      {path ? <AdminTrainingManager initialPath={path} initialHandout={handout} /> : <section className="admin-panel empty-state"><p>暂无可用培训路径，请先在内容管理中创建。</p></section>}
     </>
   )
 }

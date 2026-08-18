@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
-import type { AppUser, FeishuOrganization, LearningPath, ServiceArticle, TrainingRecord, VideoAnalytics } from '@/lib/types'
+import type { AppUser, FeishuOrganization, LearningPath, OnboardingHandout, ServiceArticle, TrainingRecord, VideoAnalytics } from '@/lib/types'
 
 export class ApiClientError extends Error {
   constructor(public status: number, message: string, public code?: string) {
@@ -35,6 +35,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 export const getCurrentUserFromApi = async () => (await apiRequest<{ user: AppUser }>('/auth/me')).user
 export const getEnrollments = async () => (await apiRequest<ListResponse<LearningPath>>('/learning/enrollments')).items
 export const getAdminTrainingPaths = async () => (await apiRequest<ListResponse<LearningPath>>('/admin/training/paths')).items
+export const getOnboardingHandout = () => apiRequest<OnboardingHandout>('/content/onboarding-handout')
+export const getAdminOnboardingHandout = () => apiRequest<OnboardingHandout>('/admin/onboarding-handout')
 type Announcement = { id: string | number; title: string; summary: string; body: string; targetUrl?: string; startsAt?: string; endsAt?: string }
 export const getAnnouncements = async () => (await apiRequest<ListResponse<Announcement>>('/content/announcements')).items
 export const getServiceArticles = async (): Promise<ServiceArticle[]> => {

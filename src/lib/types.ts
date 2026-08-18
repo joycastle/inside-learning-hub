@@ -61,6 +61,14 @@ export interface LearningPath {
   courses: Course[]
 }
 
+export interface OnboardingHandout {
+  title: string
+  summary: string
+  mediaId?: string
+  mediaUrl?: string
+  updatedAt?: string
+}
+
 export type QuestionType = 'single' | 'multiple' | 'trueFalse'
 
 export interface QuestionOption {
