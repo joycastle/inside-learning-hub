@@ -8,6 +8,7 @@ export interface OnboardingVideoCardProps {
   title: string
   description: string
   progress: number
+  videoUrl?: string
 }
 
 export function OnboardingVideoCard({
@@ -16,6 +17,7 @@ export function OnboardingVideoCard({
   title,
   description,
   progress,
+  videoUrl,
 }: OnboardingVideoCardProps) {
   const href = `/learn/${courseId}/${unitId}`
   const actionLabel = progress > 0 ? '继续观看' : '开始观看'
@@ -23,8 +25,9 @@ export function OnboardingVideoCard({
   return (
     <section className="onboarding-video-card" aria-labelledby="onboarding-video-title">
       <Link className="onboarding-video-card__media" href={href} aria-label={`${actionLabel}：${title}`}>
+        {videoUrl ? <video className="onboarding-video-card__poster" src={videoUrl} muted playsInline preload="auto" aria-hidden="true" /> : null}
         <span className="onboarding-video-card__play" aria-hidden="true"><Play size={24} fill="currentColor" /></span>
-        <span>新人入职说明视频</span>
+        <span className="onboarding-video-card__media-label">新人入职说明视频</span>
       </Link>
       <div className="onboarding-video-card__body">
         <div>

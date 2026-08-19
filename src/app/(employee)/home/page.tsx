@@ -56,6 +56,7 @@ export default async function HomePage() {
           title={onboardingCourse.title}
           description={onboardingCourse.summary}
           progress={onboardingVideo.progress}
+          videoUrl={onboardingVideo.videoUrl ?? onboardingVideo.externalUrl}
         />
 
         <section className="home-services">

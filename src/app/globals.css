@@ -1730,6 +1730,65 @@ progress.compact-progress::-moz-progress-bar,
   box-shadow: none;
 }
 
+@media (max-width: 900px) {
+  .admin-filter-summary {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-filter-summary {
+    justify-content: space-between;
+    white-space: normal;
+  }
+
+  .admin-filter-summary__details {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* 首页视频卡优先展示已上传视频的第一帧，没有资源时继续使用原蓝色占位背景。 */
+.onboarding-video-card__media {
+  position: relative;
+  overflow: hidden;
+}
+
+.onboarding-video-card__media::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 4%), rgb(0 0 0 / 34%));
+  content: "";
+  pointer-events: none;
+}
+
+.onboarding-video-card__poster {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--accent-soft);
+}
+
+.onboarding-video-card__media .onboarding-video-card__play,
+.onboarding-video-card__media .onboarding-video-card__media-label {
+  position: relative;
+  z-index: 2;
+}
+
+.onboarding-video-card__media .onboarding-video-card__play {
+  background: rgb(255 255 255 / 92%);
+}
+
+.onboarding-video-card__media .onboarding-video-card__media-label {
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+}
+
 /* 统一布局收口：避免历史页面样式叠加后出现过大的两侧留白和不一致的节奏。 */
 .employee-header__inner {
   gap: var(--space-6);
@@ -5411,6 +5470,35 @@ progress.compact-progress::-moz-progress-bar,
 
 .admin-filters--compact {
   justify-content: flex-start;
+}
+
+.admin-filter-summary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.admin-filter-summary strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 660;
+}
+
+.admin-filter-summary__details {
+  color: var(--text-tertiary);
+}
+
+.admin-filter-summary .table-button {
+  margin-left: 4px;
 }
 
 .definition-note--block {
