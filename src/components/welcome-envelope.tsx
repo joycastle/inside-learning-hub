@@ -89,7 +89,7 @@ export function WelcomeEnvelope({ userId, userEmail }: WelcomeEnvelopeProps) {
             <span className="welcome-envelope__badge">新成员</span>
           </div>
           <div className="welcome-envelope__content">
-            <p className="welcome-envelope__eyebrow">WELCOME TO JOYHOME</p>
+            <p className="welcome-envelope__eyebrow">WELCOME LETTER · JOYHOME</p>
             <h2 id="welcome-envelope-title">欢迎来到乐堡家园</h2>
             <p className="welcome-envelope__lead">从这里开始，认识公司、融入团队，也开启你的成长旅程。</p>
             <div className="welcome-envelope__highlights">

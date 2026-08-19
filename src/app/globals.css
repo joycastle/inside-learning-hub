@@ -2063,6 +2063,68 @@ progress.compact-progress::-moz-progress-bar,
   }
 }
 
+/* 在现有欢迎卡片外增加轻量信封折线，保留原有卡片的配色与信息布局。 */
+.welcome-envelope__scene {
+  isolation: isolate;
+  padding: 10px 0 18px;
+}
+
+.welcome-envelope__scene::before,
+.welcome-envelope__scene::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+}
+
+.welcome-envelope__scene::before {
+  right: 10px;
+  bottom: 0;
+  left: 10px;
+  height: 92%;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 18px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent-soft) 78%, white), color-mix(in srgb, var(--accent) 8%, var(--surface)));
+  box-shadow: 0 12px 30px rgb(0 125 169 / 9%);
+}
+
+.welcome-envelope__scene::after {
+  top: 26px;
+  right: 42px;
+  left: 42px;
+  height: 92px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: linear-gradient(135deg, transparent 49.5%, color-mix(in srgb, var(--accent) 10%, transparent) 50%, transparent 50.5%), linear-gradient(225deg, transparent 49.5%, color-mix(in srgb, var(--accent) 10%, transparent) 50%, transparent 50.5%);
+  opacity: .75;
+}
+
+.welcome-envelope__card {
+  z-index: 1;
+}
+
+.welcome-envelope__badge::before {
+  content: "✉ ";
+  font-size: 10px;
+}
+
+@media (max-width: 640px) {
+  .welcome-envelope__scene {
+    padding-bottom: 14px;
+  }
+
+  .welcome-envelope__scene::before {
+    right: 6px;
+    left: 6px;
+    border-radius: 15px;
+  }
+
+  .welcome-envelope__scene::after {
+    right: 28px;
+    left: 28px;
+    height: 76px;
+  }
+}
+
 .admin-course-preview {
   display: grid;
   gap: 20px;
