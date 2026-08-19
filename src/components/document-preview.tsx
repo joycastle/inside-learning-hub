@@ -2,7 +2,7 @@ import { ExternalLink } from 'lucide-react'
 
 interface DocumentPreviewProps {
   title: string
-  type: 'pdf' | 'video' | 'html' | 'download'
+  type: 'pdf' | 'video' | 'html' | 'image' | 'download'
   url: string
 }
 
@@ -21,6 +21,10 @@ export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
         </a>
       </div>
     )
+  }
+
+  if (type === 'image') {
+    return <div className="document-preview document-preview--image"><img className="document-preview__image" src={url} alt={title} /><a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">在新窗口打开图片<ExternalLink size={14} aria-hidden="true" /></a></div>
   }
 
   if (type === 'html') {
