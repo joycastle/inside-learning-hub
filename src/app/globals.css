@@ -5477,7 +5477,7 @@ progress.compact-progress::-moz-progress-bar,
   min-height: 44px;
   align-items: center;
   gap: 7px;
-  margin-left: auto;
+  margin-left: 0;
   padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

@@ -165,27 +165,6 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
           {hasTrainingFilters ? <button className="table-button" type="button" onClick={() => { setQuery(''); setDepartment('all') }}>清除筛选</button> : null}
         </div>
       </div>
-      <section className="admin-panel department-manager" aria-label="员工部门归属">
-        <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div><span className="definition-note">共 {organization.employees.length} 人</span></div>
-        <label className="admin-search-field department-manager__search"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索员工</span><input type="search" value={departmentQuery} onChange={(event) => setDepartmentQuery(event.target.value)} placeholder="搜索姓名、邮箱或当前部门" /></label>
-        <div className="department-manager__table-wrap">
-          <table className="data-table department-manager__table">
-            <thead><tr><th>员工</th><th>当前部门</th><th>分配部门</th></tr></thead>
-            <tbody>
-              {visibleDepartmentEmployees.map((employee) => <tr key={employee.id}>
-                <td><strong>{employee.name}</strong><small>{employee.email ?? '未填写邮箱'}</small></td>
-                <td>{employee.departmentName || '未分配部门'}</td>
-                <td><SearchableSelect value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(value) => void updateDepartment(employee.id, value)} placeholder="未分配部门" searchPlaceholder="搜索部门" options={[{ value: 'unassigned', label: '未分配部门' }, ...organization.departments.map((item) => ({ value: item.id, label: item.name }))]} /></td>
-              </tr>)}
-              {!visibleDepartmentEmployees.length ? <tr><td colSpan={3}><p className="employee-picker__empty" role="status">没有找到匹配的员工</p></td></tr> : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <section className="admin-panel department-manager department-catalog" aria-label="部门管理">
-        <div className="settings-panel__heading"><div><h2>部门管理</h2><p>维护可分配给员工的部门。删除前需要先移走该部门的员工。</p></div></div>
-        <div className="department-catalog__form"><SearchableSelect value={selectedDepartmentId} onChange={setSelectedDepartmentId} placeholder="选择已有部门" searchPlaceholder="搜索部门" options={organization.departments.map((item) => ({ value: item.id, label: item.name }))} />{selectedDepartmentId ? <><button className="table-icon-button" type="button" aria-label="编辑所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) { setEditingDepartmentId(item.id); setDepartmentName(item.name) } }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label="删除所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) void removeDepartment(item.id, item.name) }}><Trash2 size={15} aria-hidden="true" /></button></> : null}<input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder={editingDepartmentId ? '修改部门名称' : '输入新部门名称'} /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
-      </section>
       <p className="definition-note definition-note--block"><CalendarClock size={14} aria-hidden="true" />“调整分配”用于修改截止日期或追加课程，不会清空员工已有学习进度。</p>
       <section className="admin-panel admin-panel--flush" aria-label="员工分配列表">
         <div className="table-scroll">
@@ -209,7 +188,27 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
           </table>
         </div>
       </section>
-
+      <section className="admin-panel department-manager" aria-label="员工部门归属">
+        <div className="settings-panel__heading"><div><h2>员工部门</h2><p>调整后会保存到系统组织架构，不影响培训进度。</p></div><span className="definition-note">共 {organization.employees.length} 人</span></div>
+        <label className="admin-search-field department-manager__search"><Search size={16} aria-hidden="true" /><span className="sr-only">搜索员工</span><input type="search" value={departmentQuery} onChange={(event) => setDepartmentQuery(event.target.value)} placeholder="搜索姓名、邮箱或当前部门" /></label>
+        <div className="department-manager__table-wrap">
+          <table className="data-table department-manager__table">
+            <thead><tr><th>员工</th><th>当前部门</th><th>分配部门</th></tr></thead>
+            <tbody>
+              {visibleDepartmentEmployees.map((employee) => <tr key={employee.id}>
+                <td><strong>{employee.name}</strong><small>{employee.email ?? '未填写邮箱'}</small></td>
+                <td>{employee.departmentName || '未分配部门'}</td>
+                <td><SearchableSelect value={employee.departmentIds[0] ?? 'unassigned'} disabled={departmentSavingId === employee.id} onChange={(value) => void updateDepartment(employee.id, value)} placeholder="未分配部门" searchPlaceholder="搜索部门" options={[{ value: 'unassigned', label: '未分配部门' }, ...organization.departments.map((item) => ({ value: item.id, label: item.name }))]} /></td>
+              </tr>)}
+              {!visibleDepartmentEmployees.length ? <tr><td colSpan={3}><p className="employee-picker__empty" role="status">没有找到匹配的员工</p></td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section className="admin-panel department-manager department-catalog" aria-label="部门管理">
+        <div className="settings-panel__heading"><div><h2>部门管理</h2><p>维护可分配给员工的部门。删除前需要先移走该部门的员工。</p></div></div>
+        <div className="department-catalog__form"><SearchableSelect value={selectedDepartmentId} onChange={setSelectedDepartmentId} placeholder="选择已有部门" searchPlaceholder="搜索部门" options={organization.departments.map((item) => ({ value: item.id, label: item.name }))} />{selectedDepartmentId ? <><button className="table-icon-button" type="button" aria-label="编辑所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) { setEditingDepartmentId(item.id); setDepartmentName(item.name) } }}><Pencil size={15} aria-hidden="true" /></button><button className="table-icon-button" type="button" aria-label="删除所选部门" onClick={() => { const item = organization.departments.find((department) => department.id === selectedDepartmentId); if (item) void removeDepartment(item.id, item.name) }}><Trash2 size={15} aria-hidden="true" /></button></> : null}<input className="form-control" value={departmentName} onChange={(event) => setDepartmentName(event.target.value)} placeholder={editingDepartmentId ? '修改部门名称' : '输入新部门名称'} /><button className="button button--primary" type="button" onClick={() => void saveDepartment()}>{editingDepartmentId ? '保存修改' : '新增部门'}</button>{editingDepartmentId ? <button className="button button--quiet" type="button" onClick={() => { setEditingDepartmentId(null); setDepartmentName('') }}>取消</button> : null}</div>
+      </section>
       <AdminDialog
         open={assignOpen}
         title="分配培训"
