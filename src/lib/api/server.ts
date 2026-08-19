@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
-import type { AppUser, FeishuOrganization, LearningPath, OnboardingHandout, ServiceArticle, TrainingRecord, VideoAnalytics } from '@/lib/types'
+import type { AppUser, FeishuOrganization, LearningPath, OnboardingHandout, ReferenceDocument, ServiceArticle, TrainingRecord, VideoAnalytics } from '@/lib/types'
 
 export class ApiClientError extends Error {
   constructor(public status: number, message: string, public code?: string) {
@@ -37,6 +37,22 @@ export const getEnrollments = async () => (await apiRequest<ListResponse<Learnin
 export const getAdminTrainingPaths = async () => (await apiRequest<ListResponse<LearningPath>>('/admin/training/paths')).items
 export const getOnboardingHandout = () => apiRequest<OnboardingHandout>('/content/onboarding-handout')
 export const getAdminOnboardingHandout = () => apiRequest<OnboardingHandout>('/admin/onboarding-handout')
+type ReferenceDocumentApi = { id?: string | number; title?: string; slug?: string; summary?: string; body?: string; html?: string; category?: string; tags?: unknown[]; media?: { id?: string | number; mimeType?: string; filename?: string } | string | number; externalUrl?: string; required?: boolean; updatedAt?: string }
+const referenceFileType = (item: ReferenceDocumentApi): ReferenceDocument['fileType'] => {
+  const mime = String(typeof item.media === 'object' ? item.media?.mimeType ?? '' : '').toLowerCase()
+  const filename = String(typeof item.media === 'object' ? item.media?.filename ?? '' : '').toLowerCase()
+  if (mime.includes('html') || filename.endsWith('.html') || filename.endsWith('.htm')) return 'html'
+  if (mime.includes('pdf') || filename.endsWith('.pdf')) return 'pdf'
+  if (mime.includes('word') || filename.endsWith('.doc') || filename.endsWith('.docx')) return filename.endsWith('.doc') ? 'doc' : 'docx'
+  if (mime.startsWith('video/') || filename.endsWith('.mp4')) return 'video'
+  if (mime.startsWith('image/')) return 'image'
+  return item.externalUrl ? 'link' : undefined
+}
+const mapReferenceDocument = (item: ReferenceDocumentApi): ReferenceDocument => {
+  const mediaId = typeof item.media === 'object' ? item.media?.id : item.media
+  return { id: String(item.id ?? ''), title: String(item.title ?? '未命名文档'), slug: String(item.slug ?? item.id ?? ''), summary: String(item.summary ?? ''), body: item.body, html: item.html, category: item.category, tags: Array.isArray(item.tags) ? item.tags.map(String) : [], mediaId: mediaId ? String(mediaId) : undefined, mediaUrl: mediaId ? `/api/v1/media/${mediaId}/file` : item.externalUrl, fileType: referenceFileType(item), required: Boolean(item.required), updatedAt: String(item.updatedAt ?? new Date().toISOString()) }
+}
+export const getReferenceDocuments = async () => (await apiRequest<ListResponse<ReferenceDocumentApi>>('/content/reference-documents')).items.map(mapReferenceDocument)
 type Announcement = { id: string | number; title: string; summary: string; body: string; targetUrl?: string; startsAt?: string; endsAt?: string }
 export const getAnnouncements = async () => (await apiRequest<ListResponse<Announcement>>('/content/announcements')).items
 export const getServiceArticles = async (): Promise<ServiceArticle[]> => {

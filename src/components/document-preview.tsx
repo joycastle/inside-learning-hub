@@ -2,11 +2,14 @@ import { ExternalLink } from 'lucide-react'
 
 interface DocumentPreviewProps {
   title: string
-  type: 'pdf' | 'video' | 'html'
+  type: 'pdf' | 'video' | 'html' | 'download'
   url: string
 }
 
 export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
+  if (type === 'download') {
+    return <div className="document-preview document-preview__fallback"><p>该文件暂不支持网页内预览。</p><a className="button button--primary" href={url} target="_blank" rel="noreferrer" download>下载并打开文档<ExternalLink size={14} aria-hidden="true" /></a></div>
+  }
   if (type === 'video') {
     return (
       <div className="document-preview">

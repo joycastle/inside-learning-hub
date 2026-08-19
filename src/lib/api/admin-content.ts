@@ -11,6 +11,11 @@ type AdminContentDocument = {
   slug?: string
   updatedAt?: string
   _status?: string
+  isReferenceDocument?: boolean
+  required?: boolean
+  category?: string
+  tags?: unknown[]
+  media?: unknown
 }
 
 const adminContentBaseUrl = () => `${process.env.API_INTERNAL_BASE_URL ?? 'http://localhost:3001'}/api/v1/admin/content`

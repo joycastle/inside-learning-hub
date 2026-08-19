@@ -1749,6 +1749,112 @@ progress.compact-progress::-moz-progress-bar,
   }
 }
 
+.reference-document-browser {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.reference-document-browser__filters {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.reference-document-browser__filters .admin-search-field {
+  flex: 1;
+}
+
+.reference-document-browser__filters select {
+  width: 220px;
+}
+
+.reference-document-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.reference-document-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.reference-document-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.reference-document-card__icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.reference-document-card strong,
+.reference-document-card small,
+.reference-document-card em {
+  display: block;
+}
+
+.reference-document-card small {
+  margin-top: 5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.reference-document-card em {
+  margin-top: 8px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.reference-document-page {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.reference-document-page__body {
+  padding: var(--space-8);
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+.reference-document-page__body img {
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  .reference-document-browser__filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reference-document-browser__filters select {
+    width: 100%;
+  }
+
+  .reference-document-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* 首页视频卡优先展示已上传视频的第一帧，没有资源时继续使用原蓝色占位背景。 */
 .onboarding-video-card__media {
   position: relative;

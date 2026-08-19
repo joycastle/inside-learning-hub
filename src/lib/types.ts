@@ -69,6 +69,22 @@ export interface OnboardingHandout {
   updatedAt?: string
 }
 
+export interface ReferenceDocument {
+  id: string
+  title: string
+  slug: string
+  summary: string
+  body?: string
+  html?: string
+  category?: string
+  tags: string[]
+  mediaId?: string
+  mediaUrl?: string
+  fileType?: 'html' | 'pdf' | 'doc' | 'docx' | 'video' | 'image' | 'link'
+  required: boolean
+  updatedAt: string
+}
+
 export type QuestionType = 'single' | 'multiple' | 'trueFalse'
 
 export interface QuestionOption {

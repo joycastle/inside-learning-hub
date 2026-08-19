@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, Home, LifeBuoy } from 'lucide-react'
+import { BookOpen, FileText, Home, LifeBuoy } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 const navItems = [
   { href: '/home', label: '首页', icon: Home },
   { href: '/learn', label: '员工培训', icon: BookOpen },
+  { href: '/documents', label: '参考文档', icon: FileText },
   { href: '/services', label: '员工服务', icon: LifeBuoy },
 ]
 

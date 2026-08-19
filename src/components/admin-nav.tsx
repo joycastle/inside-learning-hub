@@ -18,6 +18,7 @@ const items = [
   { href: '/admin/questions', label: '题库管理', icon: CircleHelp },
   { href: '/admin/people', label: '员工与分配', icon: UsersRound },
   { href: '/admin/services', label: '员工服务', icon: LifeBuoy },
+  { href: '/admin/documents', label: '参考文档', icon: FileText },
   { href: '/admin/content', label: '内容与公告', icon: FileText },
   { href: '/admin/settings', label: '系统设置', icon: Settings },
 ]
