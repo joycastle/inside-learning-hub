@@ -1861,6 +1861,208 @@ progress.compact-progress::-moz-progress-bar,
   }
 }
 
+/* 首次登录欢迎卡：用清晰的 onboarding 信息层级替代装饰性信封。 */
+.welcome-envelope {
+  width: min(560px, calc(100vw - 32px));
+  color: var(--text-primary);
+}
+
+.welcome-envelope::backdrop {
+  background: rgb(23 23 23 / 42%);
+  backdrop-filter: blur(6px);
+}
+
+.welcome-envelope__scene {
+  height: auto;
+  opacity: 0;
+  transform: translateY(20px) scale(.97);
+  animation: welcome-card-arrive 420ms var(--ease-entrance) forwards;
+}
+
+.welcome-envelope[data-closing="true"] .welcome-envelope__scene {
+  animation: welcome-card-leave 220ms var(--ease-state) forwards;
+}
+
+.welcome-envelope__card {
+  position: relative;
+  display: grid;
+  gap: 28px;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
+  border-radius: 18px;
+  background: var(--surface-raised);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 18%);
+}
+
+.welcome-envelope__glow {
+  position: absolute;
+  top: -120px;
+  right: -80px;
+  width: 280px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+.welcome-envelope__topline,
+.welcome-envelope__letterhead {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.welcome-envelope__topline {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.welcome-envelope__letterhead {
+  gap: 10px;
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.welcome-envelope__letterhead img {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.welcome-envelope__badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.welcome-envelope__content {
+  position: relative;
+}
+
+.welcome-envelope__eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .12em;
+}
+
+.welcome-envelope__card h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 680;
+  line-height: 1.15;
+  letter-spacing: -.045em;
+}
+
+.welcome-envelope__lead {
+  max-width: 34em;
+  margin: 14px 0 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.welcome-envelope__highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.welcome-envelope__highlights > div {
+  display: grid;
+  gap: 7px;
+  min-height: 78px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent-soft) 38%, var(--surface-raised));
+}
+
+.welcome-envelope__highlights strong {
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.welcome-envelope__highlights span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.welcome-envelope__confirm {
+  position: relative;
+  width: 100%;
+  min-height: 46px;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.welcome-envelope__confirm span {
+  transition: transform var(--dur-fast) var(--ease-state);
+}
+
+.welcome-envelope__confirm:hover span {
+  transform: translateX(3px);
+}
+
+@keyframes welcome-card-arrive {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes welcome-card-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(.98);
+  }
+}
+
+@media (max-width: 640px) {
+  .welcome-envelope {
+    width: min(400px, calc(100vw - 24px));
+  }
+
+  .welcome-envelope__card {
+    gap: 24px;
+    padding: 22px 18px 18px;
+    border-radius: 15px;
+  }
+
+  .welcome-envelope__highlights {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-top: 22px;
+  }
+
+  .welcome-envelope__highlights > div {
+    display: flex;
+    min-height: 0;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+}
+
 .admin-course-preview {
   display: grid;
   gap: 20px;

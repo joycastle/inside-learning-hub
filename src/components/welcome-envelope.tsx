@@ -5,12 +5,13 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 
 export interface WelcomeEnvelopeProps {
   userId: string
+  userEmail?: string
 }
 
 const STORAGE_VERSION = 2
 const EXIT_DURATION_MS = 220
 
-export function WelcomeEnvelope({ userId }: WelcomeEnvelopeProps) {
+export function WelcomeEnvelope({ userId, userEmail }: WelcomeEnvelopeProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const closeTimerRef = useRef<number | null>(null)
   const [closing, setClosing] = useState(false)
@@ -35,7 +36,8 @@ export function WelcomeEnvelope({ userId }: WelcomeEnvelopeProps) {
     }
   }, [storageKey])
   const seen = useSyncExternalStore(subscribe, getSnapshot, () => true)
-  const visible = !seen && !dismissedForPage
+  const alwaysShowForTairui = userEmail?.trim().toLowerCase() === 'tairui@joycastle.mobi'
+  const visible = (alwaysShowForTairui || !seen) && !dismissedForPage
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -77,23 +79,29 @@ export function WelcomeEnvelope({ userId }: WelcomeEnvelopeProps) {
       }}
     >
       <div className="welcome-envelope__scene">
-        <div className="welcome-envelope__packet">
-          <div className="welcome-envelope__back" aria-hidden="true" />
-          <section className="welcome-envelope__letter">
-            <div className="welcome-envelope__letterhead" aria-hidden="true">
-              <Image src="/company-logo.png" width={28} height={28} alt="" priority />
+        <section className="welcome-envelope__card">
+          <div className="welcome-envelope__glow" aria-hidden="true" />
+          <div className="welcome-envelope__topline">
+            <div className="welcome-envelope__letterhead">
+              <Image src="/company-logo.png" width={30} height={30} alt="" priority />
               <span>乐堡家园</span>
             </div>
-            <h2 id="welcome-envelope-title">
-              欢迎来到乐堡家园，希望在这里我们共同成长！
-            </h2>
-            <button className="button button--primary welcome-envelope__confirm" type="button" onClick={dismiss}>
-              确定
-            </button>
-          </section>
-          <div className="welcome-envelope__front" aria-hidden="true" />
-          <div className="welcome-envelope__flap" aria-hidden="true" />
-        </div>
+            <span className="welcome-envelope__badge">新成员</span>
+          </div>
+          <div className="welcome-envelope__content">
+            <p className="welcome-envelope__eyebrow">WELCOME TO JOYHOME</p>
+            <h2 id="welcome-envelope-title">欢迎来到乐堡家园</h2>
+            <p className="welcome-envelope__lead">从这里开始，认识公司、融入团队，也开启你的成长旅程。</p>
+            <div className="welcome-envelope__highlights">
+              <div><strong>01</strong><span>了解公司与工作方式</span></div>
+              <div><strong>02</strong><span>完成新人入职培训</span></div>
+              <div><strong>03</strong><span>找到常用员工服务</span></div>
+            </div>
+          </div>
+          <button className="button button--primary welcome-envelope__confirm" type="button" onClick={dismiss}>
+            开始探索 <span aria-hidden="true">→</span>
+          </button>
+        </section>
       </div>
     </dialog>
   )

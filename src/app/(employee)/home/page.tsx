@@ -30,7 +30,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <WelcomeEnvelope userId={user.id} />
+      <WelcomeEnvelope userId={user.id} userEmail={user.email} />
       <div className="page-container main-content">
         <div className="notice-strip">
           <div className="notice-strip__copy">
