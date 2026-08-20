@@ -1371,6 +1371,32 @@ progress.compact-progress::-moz-progress-bar,
   white-space: nowrap;
 }
 
+/* 课程列表：把课程信息、状态统计和操作区分开，避免操作按钮挤在同一行。 */
+section[aria-labelledby="course-heading"] .management-row {
+  grid-template-columns: 44px minmax(280px, 1fr) max-content minmax(210px, 260px) max-content;
+  gap: 18px;
+  padding-block: 18px;
+}
+
+section[aria-labelledby="course-heading"] .management-row > .status-badge,
+section[aria-labelledby="course-heading"] .management-row > .text-small {
+  align-self: center;
+}
+
+section[aria-labelledby="course-heading"] .management-row__progress {
+  min-width: 190px;
+}
+
+section[aria-labelledby="course-heading"] .management-row__actions {
+  flex-wrap: wrap;
+  max-width: 330px;
+  row-gap: 8px;
+}
+
+section[aria-labelledby="course-heading"] .management-row__actions .table-action {
+  padding: 5px 0;
+}
+
 .category-summary {
   gap: 16px;
   margin-bottom: 24px;
@@ -1728,6 +1754,24 @@ progress.compact-progress::-moz-progress-bar,
   background: transparent;
   color: var(--accent-strong);
   box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  section[aria-labelledby="course-heading"] .management-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  section[aria-labelledby="course-heading"] .management-row > .text-small,
+  section[aria-labelledby="course-heading"] .management-row__progress {
+    display: none;
+  }
+
+  section[aria-labelledby="course-heading"] .management-row__actions {
+    max-width: none;
+    gap: 6px;
+  }
 }
 
 @media (max-width: 900px) {
