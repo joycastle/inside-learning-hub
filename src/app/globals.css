@@ -1373,20 +1373,9 @@ progress.compact-progress::-moz-progress-bar,
 
 /* 课程列表：把课程信息、状态统计和操作区分开，避免操作按钮挤在同一行。 */
 section[aria-labelledby="course-heading"] .management-row {
-  grid-template-columns: 44px minmax(260px, 1fr) max-content max-content minmax(170px, 230px);
-  grid-template-areas:
-    "index body status units progress"
-    "index actions actions actions actions";
-  gap: 12px 18px;
-  padding-block: 16px 12px;
-}
-
-section[aria-labelledby="course-heading"] .management-row__index {
-  grid-area: index;
-}
-
-section[aria-labelledby="course-heading"] .management-row__body {
-  grid-area: body;
+  grid-template-columns: 44px minmax(280px, 1fr) max-content minmax(210px, 260px) max-content;
+  gap: 18px;
+  padding-block: 18px;
 }
 
 section[aria-labelledby="course-heading"] .management-row > .status-badge,
@@ -1394,29 +1383,14 @@ section[aria-labelledby="course-heading"] .management-row > .text-small {
   align-self: center;
 }
 
-section[aria-labelledby="course-heading"] .management-row > .status-badge {
-  grid-area: status;
-}
-
-section[aria-labelledby="course-heading"] .management-row > .text-small {
-  grid-area: units;
-}
-
 section[aria-labelledby="course-heading"] .management-row__progress {
-  grid-area: progress;
   min-width: 190px;
 }
 
 section[aria-labelledby="course-heading"] .management-row__actions {
-  grid-area: actions;
   flex-wrap: wrap;
-  max-width: none;
+  max-width: 330px;
   row-gap: 8px;
-  justify-content: flex-start;
-  padding-top: 10px;
-  padding-left: 62px;
-  border-top: 1px solid var(--paper-200);
-  border-left: 0;
 }
 
 section[aria-labelledby="course-heading"] .management-row__actions .table-action {
@@ -1785,9 +1759,6 @@ section[aria-labelledby="course-heading"] .management-row__actions .table-action
 @media (max-width: 900px) {
   section[aria-labelledby="course-heading"] .management-row {
     grid-template-columns: 28px minmax(0, 1fr) auto;
-    grid-template-areas:
-      "index body actions"
-      "index body actions";
     gap: 10px;
     padding: 14px 16px;
   }
@@ -1800,10 +1771,6 @@ section[aria-labelledby="course-heading"] .management-row__actions .table-action
   section[aria-labelledby="course-heading"] .management-row__actions {
     max-width: none;
     gap: 6px;
-    padding-top: 0;
-    padding-left: 12px;
-    border-top: 0;
-    border-left: 1px solid var(--paper-200);
   }
 }
 
