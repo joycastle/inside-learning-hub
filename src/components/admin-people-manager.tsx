@@ -22,12 +22,13 @@ const getDefaultDueDate = () => {
 }
 
 export function AdminPeopleManager({ initialRecords, initialOrganization, availablePaths }: AdminPeopleManagerProps) {
-  const [records, setRecords] = useState(initialRecords)
+  const [records] = useState(initialRecords)
   const { organization, syncing, sync } = useFeishuOrganization(initialOrganization)
   const [query, setQuery] = useState('')
   const [department, setDepartment] = useState('all')
   const [assignOpen, setAssignOpen] = useState(false)
   const [adjustRecord, setAdjustRecord] = useState<TrainingRecord | null>(null)
+  const [additionalCourseIds, setAdditionalCourseIds] = useState<string[]>([])
   const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([])
   const [employeeQuery, setEmployeeQuery] = useState('')
   const [departmentQuery, setDepartmentQuery] = useState('')
@@ -87,6 +88,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
   const adjustAssignment = async (formData: FormData) => {
     if (!adjustRecord) return
     const dueAt = String(formData.get('dueAt') ?? adjustRecord.dueAt)
+    const courseIds = additionalCourseIds
     if (!adjustRecord.enrollmentId) {
       setFeedback('缺少培训记录标识，请刷新页面后重试。')
       return
@@ -94,16 +96,14 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
     try {
       const response = await fetch(`/api/v1/admin/enrollments/${adjustRecord.enrollmentId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dueAt: new Date(`${dueAt}T23:59:59`).toISOString() }),
+        body: JSON.stringify({ dueAt: new Date(`${dueAt}T23:59:59`).toISOString(), additionalCourseIds: courseIds }),
       })
       if (!response.ok) {
         const error = await response.json().catch(() => ({})) as { message?: string }
         setFeedback(error.message ?? '调整失败，请稍后重试。')
         return
       }
-      setRecords((current) => current.map((record) => record.enrollmentId === adjustRecord.enrollmentId ? { ...record, dueAt } : record))
-      setAdjustRecord(null)
-      setFeedback(`已调整 ${adjustRecord.userName} 的培训分配，不影响已有学习进度。`)
+      window.location.reload()
     } catch {
       setFeedback('网络异常，调整失败，请稍后重试。')
     }
@@ -180,7 +180,7 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
                   <td><StatusBadge status={record.status} /></td>
                   <td className="tabular">{record.videoProgress}%</td>
                   <td className="tabular">{record.bestScore ?? '—'}</td>
-                  <td><button className="table-button" type="button" onClick={() => setAdjustRecord(record)}>调整分配</button></td>
+                  <td><button className="table-button" type="button" onClick={() => { setAdditionalCourseIds([]); setAdjustRecord(record) }}>调整分配</button></td>
                 </tr>
               ))}
               {!visibleRecords.length ? <tr><td colSpan={8}><p className="employee-picker__empty" role="status">{query.trim() || department !== 'all' ? '没有找到匹配的培训分配记录' : '暂无培训分配记录'}</p></td></tr> : null}
@@ -240,14 +240,15 @@ export function AdminPeopleManager({ initialRecords, initialOrganization, availa
       <AdminDialog
         open={Boolean(adjustRecord)}
         title="调整员工培训"
-        description="修改截止日期或追加课程，不会清空已有进度与答题记录。"
+        description="修改截止日期，或从当前培训路径追加课程。已有学习进度与答题记录不会被清空。"
         onClose={() => setAdjustRecord(null)}
         footer={adjustRecord ? <><button className="button button--quiet" type="button" onClick={() => setAdjustRecord(null)}>取消</button><button className="button button--primary" type="submit" form="adjust-training-form">保存调整</button></> : null}
       >
         {adjustRecord ? <form className="admin-form" id="adjust-training-form" action={adjustAssignment}>
           <div className="selected-person"><strong>{adjustRecord.userName}</strong><span>{adjustRecord.departmentName} · {adjustRecord.pathTitle}</span></div>
-          <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={adjustRecord.dueAt} required /></label>
-          <label><span>当前课程</span><input className="form-control" value={adjustRecord.courseTitle} disabled /></label>
+          <label><span>截止日期</span><input className="form-control" name="dueAt" type="date" defaultValue={adjustRecord.dueAt.slice(0, 10)} required /></label>
+          <fieldset className="employee-picker"><legend>当前已分配课程</legend><div className="selected-person"><strong>{records.filter((record) => record.enrollmentId === adjustRecord.enrollmentId).map((record) => record.courseTitle).join('、') || adjustRecord.courseTitle}</strong><span>这些课程会继续保留，不会被替换。</span></div></fieldset>
+          <fieldset className="employee-picker"><legend>追加课程（可选）</legend><p className="definition-note definition-note--block">一个培训路径可以包含多个课程。这里可以为这名员工追加课程，不会替换已有课程，也不会清除学习进度。</p><div className="employee-picker__list">{(availablePaths.find((path) => path.id === adjustRecord.pathId)?.courses ?? []).filter((course) => !records.some((record) => record.enrollmentId === adjustRecord.enrollmentId && record.courseId === course.id)).map((course) => <label key={course.id}><input type="checkbox" checked={additionalCourseIds.includes(course.id)} onChange={() => setAdditionalCourseIds((current) => current.includes(course.id) ? current.filter((id) => id !== course.id) : [...current, course.id])} /><span><strong>{course.title}</strong><small>{course.summary}</small></span></label>)}{!(availablePaths.find((path) => path.id === adjustRecord.pathId)?.courses ?? []).some((course) => !records.some((record) => record.enrollmentId === adjustRecord.enrollmentId && record.courseId === course.id)) ? <p className="employee-picker__empty">当前路径没有可追加的课程，请先在培训管理中添加课程。</p> : null}</div></fieldset>
         </form> : null}
       </AdminDialog>
     </>
