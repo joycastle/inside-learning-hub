@@ -42,6 +42,7 @@ const referenceFileType = (item: ReferenceDocumentApi): ReferenceDocument['fileT
   const mime = String(typeof item.media === 'object' ? item.media?.mimeType ?? '' : '').toLowerCase()
   const filename = String(typeof item.media === 'object' ? item.media?.filename ?? '' : '').toLowerCase()
   if (mime.includes('html') || filename.endsWith('.html') || filename.endsWith('.htm')) return 'html'
+  if (mime.includes('markdown') || mime === 'text/plain' && filename.endsWith('.md') || filename.endsWith('.md')) return 'markdown'
   if (mime.includes('pdf') || filename.endsWith('.pdf')) return 'pdf'
   if (mime.includes('word') || filename.endsWith('.doc') || filename.endsWith('.docx')) return filename.endsWith('.doc') ? 'doc' : 'docx'
   if (mime.startsWith('video/') || filename.endsWith('.mp4')) return 'video'

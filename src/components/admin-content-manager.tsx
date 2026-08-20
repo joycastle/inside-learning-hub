@@ -7,6 +7,8 @@ import { AdminDialog } from '@/components/admin-dialog'
 type Collection = 'announcements' | 'knowledge-articles'
 type Item = { id: string | number; title?: string; slug?: string; summary?: string; body?: string; html?: string; externalUrl?: string; _status?: string; updatedAt?: string }
 
+const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `service-${Date.now()}`
+
 export function AdminContentManager({ collection, initialItems, emptyText }: { collection: Collection; initialItems: Item[]; emptyText: string }) {
   const [items, setItems] = useState(initialItems)
   const [editing, setEditing] = useState<Item | null>(null)
@@ -20,7 +22,7 @@ export function AdminContentManager({ collection, initialItems, emptyText }: { c
     setSaving(true)
     const body = {
       title: String(formData.get('title') ?? '').trim(),
-      slug: String(formData.get('slug') ?? '').trim(),
+      slug: editing.slug?.trim() || slugify(String(formData.get('title') ?? '')),
       summary: String(formData.get('summary') ?? '').trim(),
       body: String(formData.get('body') ?? '').trim(),
       html: String(formData.get('html') ?? '').trim(),
@@ -50,7 +52,7 @@ export function AdminContentManager({ collection, initialItems, emptyText }: { c
     {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
     <section className="admin-panel admin-panel--flush"><div className="management-list">{items.length ? items.map((item) => <div className="management-row management-row--simple" key={item.id}><div className="management-row__body"><strong>{item.title ?? '未命名内容'}</strong><p>{item.summary ?? item.slug ?? '暂无摘要'}</p></div><button className="table-action" type="button" onClick={() => setEditing(item)}>编辑</button></div>) : <div className="empty-state empty-state--compact"><p>{emptyText}</p></div>}</div></section>
     <AdminDialog open={Boolean(editing)} title={editing?.id ? '编辑内容' : isArticle ? '新建服务内容' : '新建公告'} description="保存后会立即同步到员工端。" size="large" density="compact" onClose={() => !saving && setEditing(null)} footer={<><button className="button button--quiet" type="button" onClick={() => setEditing(null)} disabled={saving}>取消</button><button className="button button--primary" type="submit" form="content-editor-form" disabled={saving}>{saving ? '保存中…' : '保存内容'}</button></>}>
-      {editing ? <form className="admin-form" id="content-editor-form" action={save}><label><span>标题</span><input className="form-control" name="title" value={editing.title ?? ''} onChange={(event) => setEditing({ ...editing, title: event.target.value })} required /></label>{isArticle ? <label><span>Slug</span><input className="form-control" name="slug" value={editing.slug ?? ''} onChange={(event) => setEditing({ ...editing, slug: event.target.value })} required /></label> : null}<label><span>摘要</span><textarea className="form-control" name="summary" value={editing.summary ?? ''} onChange={(event) => setEditing({ ...editing, summary: event.target.value })} required /></label><label><span>{isArticle ? '正文（纯文本）' : '公告正文'}</span><textarea className="form-control" name="body" value={editing.body ?? ''} onChange={(event) => setEditing({ ...editing, body: event.target.value })} required={!isArticle} /></label>{isArticle ? <label><span>外部链接（可选）</span><input className="form-control" name="externalUrl" value={editing.externalUrl ?? ''} onChange={(event) => setEditing({ ...editing, externalUrl: event.target.value })} /></label> : null}</form> : null}
+      {editing ? <form className="admin-form" id="content-editor-form" action={save}><label><span>标题</span><input className="form-control" name="title" value={editing.title ?? ''} onChange={(event) => setEditing({ ...editing, title: event.target.value })} required /></label><label><span>摘要</span><textarea className="form-control" name="summary" value={editing.summary ?? ''} onChange={(event) => setEditing({ ...editing, summary: event.target.value })} required /></label><label><span>{isArticle ? '正文（纯文本）' : '公告正文'}</span><textarea className="form-control" name="body" value={editing.body ?? ''} onChange={(event) => setEditing({ ...editing, body: event.target.value })} required={!isArticle} /></label>{isArticle ? <label><span>外部链接（可选）</span><input className="form-control" name="externalUrl" value={editing.externalUrl ?? ''} onChange={(event) => setEditing({ ...editing, externalUrl: event.target.value })} /></label> : null}</form> : null}
     </AdminDialog>
   </>
 }

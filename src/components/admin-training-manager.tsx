@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, Layers3, Pencil, Plus } from 'lucide-react'
+import { Archive, ArrowRight, Layers3, Pencil, Plus, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
@@ -112,6 +112,17 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
     }
   }
 
+  const toggleCourse = async (course: Course) => {
+    const nextActive = course.active === false
+    if (!window.confirm(nextActive ? `确定重新启用“${course.title}”吗？` : `确定停用“${course.title}”吗？停用后员工端将不再显示，但历史记录会保留。`)) return
+    try {
+      const response = await fetch(`/api/v1/admin/training/courses/${course.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Origin: window.location.origin }, body: JSON.stringify({ title: course.title, summary: course.summary, category: course.category, active: nextActive }) })
+      if (!response.ok) { const error = await response.json().catch(() => ({})) as { message?: string }; setFeedback(error.message ?? '课程状态更新失败，请稍后重试。'); return }
+      setPath((current) => ({ ...current, courses: current.courses.map((item) => item.id === course.id ? { ...item, active: nextActive } : item) }))
+      setFeedback(nextActive ? '课程已重新启用。' : '课程已停用，员工端将不再显示。')
+    } catch { setFeedback('网络异常，课程状态更新失败，请稍后重试。') }
+  }
+
   const defaultDueDays = Math.max(1, Math.round((new Date(path.dueAt).getTime() - new Date(path.assignedAt).getTime()) / 86400000))
   return <>
     <div className="admin-page-actions admin-page-actions--standalone admin-training-toolbar"><label className="compact-select-label admin-training-path-control"><span>当前培训路径</span><select className="form-control" value={path.id} disabled><option value={path.id}>{path.title}</option></select></label><button className="button button--secondary" type="button" onClick={() => openPath(true)}><Pencil size={16} aria-hidden="true" />编辑培训内容</button><button className="button button--primary" type="button" onClick={() => openPath(false)}><Plus size={16} aria-hidden="true" />新建培训路径</button></div>
@@ -126,7 +137,7 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
       </form>
     </section>
     <section className="admin-panel path-editor" aria-labelledby="path-heading"><div className="path-editor__summary"><div className="path-editor__icon"><Layers3 size={22} aria-hidden="true" /></div><div><span className="admin-page-eyebrow">当前培训路径</span><h2 id="path-heading">{path.title}</h2><p>{path.summary || '暂未填写路径说明。'}</p></div><div className="path-editor__meta"><span>{path.progress}% 已完成</span></div></div><div className="path-editor__facts"><span><strong>{path.courseCount}</strong>门课程</span><span><strong>{defaultDueDays}</strong>天默认期限</span><span><strong>{path.completedCourses}</strong>门课程已完成</span></div></section>
-    <section className="admin-panel admin-panel--flush" aria-labelledby="course-heading"><div className="panel-heading panel-heading--padded"><div><h2 id="course-heading">课程与单元</h2><p>课程和资源均来自线上数据库。</p></div><button className="button button--secondary" type="button" onClick={() => { setEditingCourse(null); setEditingUnit(null); setDialog('course') }}><Plus size={16} aria-hidden="true" />添加课程</button></div><div className="management-list">{path.courses.length ? path.courses.map((course) => <div className="management-row" key={course.id}><span className="management-row__index tabular">{String(course.order).padStart(2, '0')}</span><div className="management-row__body"><strong>{course.title}</strong><p>{course.summary || '暂未填写课程说明。'}</p></div><span className="text-muted text-small">{course.unitCount} 个单元</span><div className="management-row__progress"><ProgressBar value={course.progress} label={`${course.title}完成率`} /><span className="tabular">{course.progress}%</span></div><div className="management-row__actions"><button className="table-action" type="button" onClick={() => { setEditingCourse(course); setEditingUnit(null); setDialog('course') }}><Pencil size={14} aria-hidden="true" />编辑课程</button>{course.units[0] ? <button className="table-action" type="button" onClick={() => { setEditingCourse(null); setEditingUnit(course.units[0]); setDialog('unit') }}><Pencil size={14} aria-hidden="true" />编辑培训内容</button> : null}<Link className="table-action" href={`/admin/training/preview/${course.id}`}><ArrowRight size={14} aria-hidden="true" />管理端预览</Link></div></div>) : <div className="empty-state empty-state--compact"><p>当前路径还没有课程，请先添加课程。</p></div>}</div></section>
+    <section className="admin-panel admin-panel--flush" aria-labelledby="course-heading"><div className="panel-heading panel-heading--padded"><div><h2 id="course-heading">课程与单元</h2><p>课程和资源均来自线上数据库。停用课程不会删除历史学习记录。</p></div><button className="button button--secondary" type="button" onClick={() => { setEditingCourse(null); setEditingUnit(null); setDialog('course') }}><Plus size={16} aria-hidden="true" />添加课程</button></div><div className="management-list">{path.courses.length ? path.courses.map((course) => <div className="management-row" key={course.id}><span className="management-row__index tabular">{String(course.order).padStart(2, '0')}</span><div className="management-row__body"><strong>{course.title}</strong><p>{course.summary || '暂未填写课程说明。'}</p></div><span className={`status-badge ${course.active === false ? 'status-badge--muted' : 'status-badge--info'}`}>{course.active === false ? '已停用' : '启用中'}</span><span className="text-muted text-small">{course.unitCount} 个单元</span><div className="management-row__progress"><ProgressBar value={course.progress} label={`${course.title}完成率`} /><span className="tabular">{course.progress}%</span></div><div className="management-row__actions"><button className="table-action" type="button" onClick={() => { setEditingCourse(course); setEditingUnit(null); setDialog('course') }}><Pencil size={14} aria-hidden="true" />编辑课程</button>{course.units[0] ? <button className="table-action" type="button" onClick={() => { setEditingCourse(null); setEditingUnit(course.units[0]); setDialog('unit') }}><Pencil size={14} aria-hidden="true" />编辑培训内容</button> : null}<button className="table-action" type="button" onClick={() => void toggleCourse(course)}>{course.active === false ? <RotateCcw size={14} aria-hidden="true" /> : <Archive size={14} aria-hidden="true" />}{course.active === false ? '重新启用' : '停用课程'}</button><Link className="table-action" href={`/admin/training/preview/${course.id}`}><ArrowRight size={14} aria-hidden="true" />管理端预览</Link></div></div>) : <div className="empty-state empty-state--compact"><p>当前路径还没有课程，请先添加课程。</p></div>}</div></section>
     <AdminDialog
       open={Boolean(dialog)}
       title={dialog === 'path' ? (editingPath ? '编辑培训内容' : '新建培训路径') : dialog === 'unit' ? '编辑学习单元' : editingCourse ? '编辑课程' : '添加课程'}

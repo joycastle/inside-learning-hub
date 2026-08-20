@@ -40,6 +40,7 @@ export interface Course {
   title: string
   summary: string
   category: string
+  active?: boolean
   durationMinutes: number
   status: LearningStatus
   progress: number
@@ -80,7 +81,7 @@ export interface ReferenceDocument {
   tags: string[]
   mediaId?: string
   mediaUrl?: string
-  fileType?: 'html' | 'pdf' | 'doc' | 'docx' | 'video' | 'image' | 'link'
+  fileType?: 'html' | 'markdown' | 'pdf' | 'doc' | 'docx' | 'video' | 'image' | 'link'
   required: boolean
   updatedAt: string
 }

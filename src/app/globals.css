@@ -1853,6 +1853,38 @@ progress.compact-progress::-moz-progress-bar,
   object-fit: contain;
 }
 
+.document-preview--markdown {
+  padding: var(--space-8);
+}
+
+.markdown-document-content {
+  max-width: 900px;
+  margin: 0 auto;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+.markdown-document-content h1,
+.markdown-document-content h2,
+.markdown-document-content h3 {
+  margin: 1.5em 0 .6em;
+  line-height: 1.25;
+}
+
+.markdown-document-content h1 { margin-top: 0; font-size: 32px; }
+.markdown-document-content h2 { font-size: 24px; }
+.markdown-document-content h3 { font-size: 19px; }
+.markdown-document-content p,
+.markdown-document-content ul,
+.markdown-document-content ol,
+.markdown-document-content blockquote,
+.markdown-document-content pre { margin: 1em 0; }
+.markdown-document-content blockquote { padding-left: 16px; border-left: 3px solid var(--accent); color: var(--text-secondary); }
+.markdown-document-content code { padding: 2px 5px; border-radius: 4px; background: var(--surface-raised); font-family: var(--font-mono); }
+.markdown-document-content pre { overflow-x: auto; padding: 16px; border-radius: var(--radius-md); background: #18212b; color: #f5f7fa; }
+.markdown-document-content pre code { padding: 0; background: transparent; color: inherit; }
+.markdown-document-content a { color: var(--accent-strong); text-decoration: underline; }
+
 @media (max-width: 720px) {
   .reference-document-browser__filters {
     align-items: stretch;

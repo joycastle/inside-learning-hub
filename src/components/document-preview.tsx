@@ -1,8 +1,9 @@
 import { ExternalLink } from 'lucide-react'
+import { MarkdownDocumentPreview } from '@/components/markdown-document-preview'
 
 interface DocumentPreviewProps {
   title: string
-  type: 'pdf' | 'video' | 'html' | 'image' | 'download'
+  type: 'pdf' | 'video' | 'html' | 'markdown' | 'image' | 'download'
   url: string
 }
 
@@ -26,6 +27,8 @@ export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
   if (type === 'image') {
     return <div className="document-preview document-preview--image"><img className="document-preview__image" src={url} alt={title} /><a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">在新窗口打开图片<ExternalLink size={14} aria-hidden="true" /></a></div>
   }
+
+  if (type === 'markdown') return <MarkdownDocumentPreview title={title} url={url} />
 
   if (type === 'html') {
     return (
