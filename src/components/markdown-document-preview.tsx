@@ -5,8 +5,14 @@ import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 const normalizeMarkdown = (value: string) => value
-  // 兼容常见的“**编号. **标题”写法，转换为真正的 Markdown 小标题。
-  .replace(/^\s*\*\*\s*(\d+[.)])\s*\*\*\s*(.+?)\s*$/gm, '### $1 $2')
+  // 兼容上传文件中由富文本导出产生的多种异常标题写法，例如：
+  // `## **1\. ****标题**`、`### **2\.1****标题**`、`### **7****\.1标题**`。
+  // 这些内容不是合法的普通标题，直接交给 Markdown 解析器会把星号原样显示出来。
+  .replace(/^\s*#{1,6}\s+\*\*(\d+)\s*\\?\.\s*\*{2,}\s*(.*?)\s*\*{0,2}\s*$/gm, (_match, number, heading) => `### ${number}. ${heading.replace(/\*+$/g, '').trim()}`)
+  .replace(/^\s*#{1,6}\s+\*\*(\d+)\s*\\?\.\s*(\d+)\s*\*{2,}\s*(.*?)\s*\*{0,2}\s*$/gm, (_match, major, minor, heading) => `### ${major}.${minor} ${heading.replace(/\*+$/g, '').trim()}`)
+  .replace(/^\s*#{1,6}\s+\*\*(\d+)\s*\*{2,}\s*\\?\.\s*(\d+)\s*(.*?)\s*\*{0,2}\s*$/gm, (_match, major, minor, heading) => `### ${major}.${minor} ${heading.replace(/\*+$/g, '').trim()}`)
+  // 兼容没有外层标题级别的“**1. **标题”写法。
+  .replace(/^\s*\*\*\s*(\d+)\s*\\?[.)]\s*\*{2,}\s*(.+?)\s*$/gm, (_match, number, heading) => `### ${number}. ${heading.replace(/\*+$/g, '').trim()}`)
 
 export function MarkdownDocumentPreview({ title, url, initialContent }: { title: string; url?: string; initialContent?: string }) {
   const [content, setContent] = useState<string | null>(initialContent ?? null)
