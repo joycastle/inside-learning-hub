@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 const normalizeMarkdown = (value: string) => value
-  // 兼容常见的“**编号. **标题”写法，避免空格导致 Markdown 粗体标记失效。
-  .replace(/\*\*([^*\n]+?)\s+\*\*(?=\S)/g, '**$1**')
+  // 兼容常见的“**编号. **标题”写法，转换为真正的 Markdown 小标题。
+  .replace(/^\s*\*\*\s*(\d+[.)])\s*\*\*\s*(.+?)\s*$/gm, '### $1 $2')
 
 export function MarkdownDocumentPreview({ title, url, initialContent }: { title: string; url?: string; initialContent?: string }) {
   const [content, setContent] = useState<string | null>(initialContent ?? null)
