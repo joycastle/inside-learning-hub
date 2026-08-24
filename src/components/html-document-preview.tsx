@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 const responsivePreviewStyle = `<style data-joyhome-preview="responsive">
-html { overflow-x: hidden !important; }
+html { overflow-x: hidden !important; overflow-y: auto !important; }
 body { transform: scale(var(--joyhome-preview-scale, 1)); transform-origin: top left; width: calc(100% / var(--joyhome-preview-scale, 1)); }
 img, svg, video, canvas, table { max-width: 100%; }
 </style>`
@@ -18,7 +18,12 @@ const responsivePreviewScript = `<script data-joyhome-preview="responsive">(() =
     cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => {
       root.style.setProperty('--joyhome-preview-scale', '1')
-      const contentWidth = Math.max(root.scrollWidth, body.scrollWidth)
+      // 固定宽度的 HTML 经常把根节点的 scrollWidth 限制在 iframe 宽度内，
+      // 因此不能只看 root.scrollWidth；扫描实际元素边界才能识别画布、流程图等内容。
+      const contentWidth = Array.from(body.querySelectorAll('*')).reduce((width, element) => {
+        const rect = element.getBoundingClientRect()
+        return Math.max(width, rect.right)
+      }, Math.max(body.getBoundingClientRect().right, root.scrollWidth, body.scrollWidth))
       const scale = Math.min(1, Math.max(0.25, window.innerWidth / Math.max(contentWidth, 1)))
       root.style.setProperty('--joyhome-preview-scale', String(scale))
     })
