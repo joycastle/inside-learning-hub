@@ -3,6 +3,40 @@
 import { ExternalLink } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+const responsivePreviewStyle = `<style data-joyhome-preview="responsive">
+html { overflow-x: hidden !important; }
+body { transform: scale(var(--joyhome-preview-scale, 1)); transform-origin: top left; width: calc(100% / var(--joyhome-preview-scale, 1)); }
+img, svg, video, canvas, table { max-width: 100%; }
+</style>`
+
+const responsivePreviewScript = `<script data-joyhome-preview="responsive">(() => {
+  const root = document.documentElement
+  const body = document.body
+  if (!body) return
+  let frame = 0
+  const fit = () => {
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => {
+      root.style.setProperty('--joyhome-preview-scale', '1')
+      const contentWidth = Math.max(root.scrollWidth, body.scrollWidth)
+      const scale = Math.min(1, Math.max(0.25, window.innerWidth / Math.max(contentWidth, 1)))
+      root.style.setProperty('--joyhome-preview-scale', String(scale))
+    })
+  }
+  window.addEventListener('resize', fit)
+  window.addEventListener('load', fit)
+  new ResizeObserver(fit).observe(body)
+  fit()
+})()</script>`
+
+const prepareHtmlPreview = (content: string, baseHref: string) => {
+  let prepared = content.replace(/<head(\s[^>]*)?>/i, (match) => `${match}<base href="${baseHref}">${responsivePreviewStyle}`)
+  prepared = prepared.replace(/<\/body>/i, `${responsivePreviewScript}</body>`)
+  if (!/<head(?:\s[^>]*)?>/i.test(prepared)) prepared = `${responsivePreviewStyle}${prepared}`
+  if (!/<\/body>/i.test(prepared)) prepared += responsivePreviewScript
+  return prepared
+}
+
 export function HtmlDocumentPreview({ title, url }: { title: string; url: string }) {
   const [content, setContent] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -27,9 +61,7 @@ export function HtmlDocumentPreview({ title, url }: { title: string; url: string
     return () => { active = false }
   }, [url])
 
-  const renderedContent = content && baseHref
-    ? content.replace(/<head(\s[^>]*)?>/i, (match) => `${match}<base href="${baseHref}">`)
-    : content
+  const renderedContent = content && baseHref ? prepareHtmlPreview(content, baseHref) : content
 
   return (
     <div className="document-preview document-preview--html">
