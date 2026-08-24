@@ -1328,6 +1328,14 @@ progress.compact-progress::-moz-progress-bar,
   white-space: nowrap;
 }
 
+.reference-document-management-row {
+  grid-template-columns: 28px minmax(0, 1fr) auto max-content;
+}
+
+.reference-document-management-row__icon {
+  color: var(--ink-500);
+}
+
 .management-row:last-child {
   border-bottom: 0;
 }
@@ -3337,6 +3345,31 @@ section[aria-labelledby="course-heading"] .management-row__actions .table-action
   font-size: 13px;
 }
 
+.document-preview__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.document-preview__loading {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.document-preview--html .document-preview__frame--html {
+  min-height: min(78vh, 900px);
+  border: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 32px rgb(21 51 76 / 8%);
+}
+
 /* 数据量可能增长的人员、部门、路径和题目分类统一使用可搜索选择器。 */
 .searchable-select {
   position: relative;
@@ -4166,6 +4199,20 @@ section[aria-labelledby="course-heading"] .management-row__actions .table-action
     align-items: flex-end;
     gap: 6px;
     padding-left: 12px;
+  }
+
+  .reference-document-management-row {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+  }
+
+  .reference-document-management-row .management-row__actions {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    flex-direction: row;
+    justify-content: flex-end;
+    border-left: 0;
+    border-top: 1px solid var(--paper-200);
+    padding-top: 10px;
   }
 
   .announcement-row {

@@ -1,9 +1,10 @@
 import { ExternalLink } from 'lucide-react'
+import { HtmlDocumentPreview } from '@/components/html-document-preview'
 import { MarkdownDocumentPreview } from '@/components/markdown-document-preview'
 
 interface DocumentPreviewProps {
   title: string
-  type: 'pdf' | 'video' | 'html' | 'markdown' | 'image' | 'download'
+  type: 'pdf' | 'video' | 'html' | 'markdown' | 'image' | 'document' | 'download'
   url: string
 }
 
@@ -31,14 +32,19 @@ export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
   if (type === 'markdown') return <MarkdownDocumentPreview title={title} url={url} />
 
   if (type === 'html') {
+    return <HtmlDocumentPreview title={title} url={url} />
+  }
+
+  if (type === 'document') {
     return (
-      <div className="document-preview">
-        {/*
-         * HTML 讲义常包含目录切换、交互图表等脚本。允许脚本但不授予
-         * same-origin，避免上传内容读取主站 cookie 或操作主页面。
-         */}
-        <iframe className="document-preview__frame document-preview__frame--html" title={`${title} HTML 预览`} src={url} sandbox="allow-scripts allow-forms allow-popups" />
-        <a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">在新窗口打开 HTML 讲义<ExternalLink size={14} aria-hidden="true" /></a>
+      <div className="document-preview document-preview--document">
+        <iframe className="document-preview__frame" title={`${title} 文档预览`} src={url} />
+        <div className="document-preview__toolbar">
+          <span>浏览器支持时会直接显示文档；若未显示，可打开或下载文件。</span>
+          <a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer" download>
+            打开 / 下载文档<ExternalLink size={14} aria-hidden="true" />
+          </a>
+        </div>
       </div>
     )
   }
