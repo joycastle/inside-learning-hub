@@ -31,6 +31,17 @@ const responsivePreviewScript = `<script data-joyhome-preview="responsive">(() =
 
 const prepareHtmlPreview = (content: string, baseHref: string) => {
   let prepared = content.replace(/<head(\s[^>]*)?>/i, (match) => `${match}<base href="${baseHref}">${responsivePreviewStyle}`)
+  prepared = prepared.replace(/(<a\b[^>]*\bhref=)(["'])([^"']+)(\2)/gi, (match, prefix, quote, href, closingQuote) => {
+    if (/^(?:#|mailto:|tel:|javascript:|data:|https?:\/\/)/i.test(href)) return match
+    try {
+      const resolved = new URL(href, baseHref)
+      if (!/\.(?:html?|xhtml)$/i.test(resolved.pathname)) return match
+      const previewUrl = `/documents/html-preview?url=${encodeURIComponent(resolved.href)}`
+      return `${prefix}${quote}${previewUrl}${closingQuote}`
+    } catch {
+      return match
+    }
+  })
   prepared = prepared.replace(/<\/body>/i, `${responsivePreviewScript}</body>`)
   if (!/<head(?:\s[^>]*)?>/i.test(prepared)) prepared = `${responsivePreviewStyle}${prepared}`
   if (!/<\/body>/i.test(prepared)) prepared += responsivePreviewScript
