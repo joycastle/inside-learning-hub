@@ -21,6 +21,8 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
   const [feedback, setFeedback] = useState('')
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
 
   const openNew = () => setEditing({ id: '', category: categoryItems[0]?.id ?? '', type: 'single', prompt: '', options: defaultOptions(), explanation: '', difficulty: 'easy', active: true })
   const openEdit = (question: Question) => setEditing({ ...question, options: question.options?.length ? question.options : defaultOptions() })
@@ -83,11 +85,34 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
       const response = await fetch(`/api/v1/admin/content/questions/${question.id}`, { method: 'DELETE', headers: { Origin: window.location.origin } })
       if (!response.ok) { setFeedback('删除失败，请稍后重试。'); return }
       setQuestions((current) => current.filter((item) => item.id !== question.id))
+      setSelectedIds((current) => { const next = new Set(current); next.delete(String(question.id)); return next })
       setFeedback('题目已删除。')
     } catch {
       setFeedback('网络异常，删除失败，请稍后重试。')
     }
   }
+
+  const removeSelected = async () => {
+    const ids = [...selectedIds]
+    if (!ids.length || deleting) return
+    if (!window.confirm(`确定删除选中的 ${ids.length} 道题目吗？删除后题目不会再用于新的测评。`)) return
+    setDeleting(true)
+    setFeedback('正在删除选中的题目…')
+    try {
+      const results = await Promise.all(ids.map((id) => fetch(`/api/v1/admin/content/questions/${id}`, { method: 'DELETE', headers: { Origin: window.location.origin } })))
+      const failed = results.filter((response) => !response.ok).length
+      const removed = new Set(ids.filter((_, index) => results[index]?.ok))
+      setQuestions((current) => current.filter((item) => !removed.has(String(item.id))))
+      setSelectedIds((current) => { const next = new Set(current); removed.forEach((id) => next.delete(id)); return next })
+      setFeedback(failed ? `${removed.size} 道题目已删除，${failed} 道删除失败。` : `已删除 ${removed.size} 道题目。`)
+    } catch {
+      setFeedback('网络异常，批量删除失败，请稍后重试。')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const allSelected = questions.length > 0 && questions.every((item) => selectedIds.has(String(item.id)))
 
   const importCsv = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -114,6 +139,7 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
       <div className="admin-page-actions admin-page-actions--standalone">
         <button className="button button--primary" type="button" onClick={openNew}><Plus size={16} aria-hidden="true" />新建题目</button>
         <label className="button button--quiet"><FileUp size={16} aria-hidden="true" />{importing ? '导入中…' : '导入 CSV'}<input type="file" accept=".csv,text/csv" hidden disabled={importing} onChange={importCsv} /></label>
+        {selectedIds.size ? <button className="button button--danger" type="button" onClick={() => void removeSelected()} disabled={deleting}><Trash2 size={16} aria-hidden="true" />{deleting ? '删除中…' : `删除选中（${selectedIds.size}）`}</button> : null}
       </div>
       {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
       <section className="admin-panel admin-panel--flush question-categories-panel" aria-labelledby="question-categories-heading">
@@ -122,8 +148,9 @@ export function AdminQuestionManager({ initialQuestions, categories }: { initial
       </section>
       <section className="admin-panel admin-panel--flush">
         <div className="management-list">
+          {questions.length ? <div className="question-selection-bar"><label><input type="checkbox" checked={allSelected} onChange={(event) => setSelectedIds(event.target.checked ? new Set(questions.map((item) => String(item.id))) : new Set())} />全选题目</label><span>已选择 {selectedIds.size} 道</span></div> : null}
           {questions.length ? questions.map((item) => <div className="management-row management-row--simple" key={item.id}>
-            <div className="management-row__body"><strong>{item.prompt ?? '未命名题目'}</strong><p>{item.type === 'multiple' ? '多选题' : item.type === 'trueFalse' ? '判断题' : '单选题'} · {item.difficulty === 'hard' ? '困难' : item.difficulty === 'medium' ? '中等' : '简单'}</p></div>
+            <div className="management-row__body"><label className="question-select"><input type="checkbox" checked={selectedIds.has(String(item.id))} onChange={(event) => setSelectedIds((current) => { const next = new Set(current); if (event.target.checked) next.add(String(item.id)); else next.delete(String(item.id)); return next })} /><span><strong>{item.prompt ?? '未命名题目'}</strong><p>{item.type === 'multiple' ? '多选题' : item.type === 'trueFalse' ? '判断题' : '单选题'} · {item.difficulty === 'hard' ? '困难' : item.difficulty === 'medium' ? '中等' : '简单'}</p></span></label></div>
             <div className="management-row__actions"><button className="table-action" type="button" onClick={() => openEdit(item)}>编辑</button><button className="table-action table-action--danger" type="button" onClick={() => remove(item)}><Trash2 size={14} aria-hidden="true" />删除</button></div>
           </div>) : <div className="empty-state empty-state--compact"><p>暂无题目，点击右上角新建。</p></div>}
         </div>
