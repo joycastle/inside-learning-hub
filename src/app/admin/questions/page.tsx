@@ -7,11 +7,11 @@ export const metadata = { title: '题库管理' }
 
 export default async function QuestionManagementPage() {
   await requireAdmin()
-  const [questions, categories] = await Promise.all([getAdminCollection('questions'), getAdminCollection('question-categories')])
+  const questions = await getAdminCollection('questions')
   return (
     <>
       <AdminPageHeader eyebrow="测评内容" title="题库管理" description="查看和维护培训测评题目，数据统一保存到统一内容库。" />
-      <AdminQuestionManager initialQuestions={questions} categories={categories} />
+      <AdminQuestionManager initialQuestions={questions} />
     </>
   )
 }
