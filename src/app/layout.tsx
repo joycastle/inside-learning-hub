@@ -8,6 +8,10 @@ export const metadata: Metadata = {
     template: '%s · 乐堡家园',
   },
   description: '公司内部培训与员工服务中心',
+  icons: {
+    icon: [{ url: '/company-logo.png', type: 'image/png' }],
+    apple: [{ url: '/company-logo.png', type: 'image/png' }],
+  },
 }
 
 const designContract = `
