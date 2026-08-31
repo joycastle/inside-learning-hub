@@ -5,7 +5,7 @@ import { useMemo, useRef, useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 
 type MediaValue = { id?: string | number; filename?: string; mimeType?: string } | string | number | null
-type ReferenceDocumentItem = { id: string | number; title?: string; summary?: string; tags?: unknown[]; media?: unknown; required?: boolean; isReferenceDocument?: boolean; updatedAt?: string }
+type ReferenceDocumentItem = { id: string | number; title?: string; slug?: string; summary?: string; tags?: unknown[]; media?: unknown; required?: boolean; isReferenceDocument?: boolean; updatedAt?: string }
 
 const mediaIdOf = (media: unknown) => {
   if (media && typeof media === 'object' && 'id' in media) return (media as { id?: string | number }).id
@@ -48,7 +48,9 @@ export function ReferenceDocumentManager({ initialItems }: { initialItems: Refer
         media = String((await uploadResponse.json() as { id: string | number }).id)
       }
       const title = String(formData.get('title') ?? '').trim()
-      const body = { title, slug: `reference-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || Date.now()}`, summary: String(formData.get('summary') ?? '').trim(), tags: String(formData.get('tags') ?? '').split(/[,，]/).map((tag) => tag.trim()).filter(Boolean), required: formData.get('required') === 'on', isReferenceDocument: true, ...(media ? { media: Number(media) } : {}) }
+      const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'document'
+      const slug = editing.id ? editing.slug : `reference-${baseSlug}-${Date.now()}`
+      const body = { title, slug: slug || `reference-${baseSlug}-${Date.now()}`, summary: String(formData.get('summary') ?? '').trim(), tags: String(formData.get('tags') ?? '').split(/[,，]/).map((tag) => tag.trim()).filter(Boolean), required: formData.get('required') === 'on', isReferenceDocument: true, ...(media ? { media: Number(media) } : {}) }
       const response = await fetch(editing.id ? `/api/v1/admin/content/knowledge-articles/${editing.id}` : '/api/v1/admin/content/knowledge-articles', { method: editing.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json', Origin: window.location.origin }, body: JSON.stringify(body) })
       if (!response.ok) throw new Error('文档保存失败，请稍后重试。')
       const saved = await response.json() as ReferenceDocumentItem
