@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { ExternalLink } from 'lucide-react'
 import { HtmlDocumentPreview } from '@/components/html-document-preview'
 import { MarkdownDocumentPreview } from '@/components/markdown-document-preview'
@@ -26,7 +27,7 @@ export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
   }
 
   if (type === 'image') {
-    return <div className="document-preview document-preview--image"><img className="document-preview__image" src={url} alt={title} /><a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">在新窗口打开图片<ExternalLink size={14} aria-hidden="true" /></a></div>
+    return <div className="document-preview document-preview--image"><Image className="document-preview__image" src={url} alt={title} width={1200} height={675} unoptimized /><a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">在新窗口打开图片<ExternalLink size={14} aria-hidden="true" /></a></div>
   }
 
   if (type === 'markdown') return <MarkdownDocumentPreview title={title} url={url} />

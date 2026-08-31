@@ -16,6 +16,14 @@ export interface AppUser {
 export type UnitType = 'article' | 'pdf' | 'feishuDoc' | 'video' | 'html'
 export type LearningStatus = 'notStarted' | 'inProgress' | 'completed' | 'overdue'
 
+export interface LearningResource {
+  id: string
+  title: string
+  url: string
+  filename?: string
+  mimeType?: string
+}
+
 export interface LearningUnit {
   id: string
   courseId: string
@@ -31,6 +39,8 @@ export interface LearningUnit {
   externalUrl?: string
   videoUrl?: string
   mediaId?: string
+  mediaIds?: string[]
+  resources?: LearningResource[]
 }
 
 export interface Course {

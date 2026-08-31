@@ -1405,6 +1405,54 @@ section[aria-labelledby="course-heading"] .management-row__actions .table-action
   padding: 5px 0;
 }
 
+.course-unit-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--paper-200);
+}
+
+.course-unit-list__header,
+.course-unit-list__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.course-unit-list__header {
+  justify-content: space-between;
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.course-unit-list__item {
+  min-height: 30px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--paper-100);
+}
+
+.course-unit-list__name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  font-size: 13px;
+}
+
+.course-unit-list__name small {
+  color: var(--ink-500);
+  font-size: 11px;
+}
+
+.course-unit-list__empty {
+  color: var(--ink-500);
+  font-size: 12px;
+}
+
 .category-summary {
   gap: 16px;
   margin-bottom: 24px;

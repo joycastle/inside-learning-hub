@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e:auth": "node scripts/authenticated-smoke.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {
