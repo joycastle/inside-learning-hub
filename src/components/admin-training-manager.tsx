@@ -1,8 +1,8 @@
 'use client'
 
-import { Archive, ArrowRight, Layers3, Pencil, Plus, RotateCcw } from 'lucide-react'
+import { Archive, ArrowRight, Layers3, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AdminDialog } from '@/components/admin-dialog'
 import { ProgressBar } from '@/components/progress-bar'
 import type { Course, LearningPath, LearningUnit, OnboardingHandout, UnitType } from '@/lib/types'
@@ -15,19 +15,25 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
   const [editingPath, setEditingPath] = useState(false)
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
   const [editingUnit, setEditingUnit] = useState<LearningUnit | null>(null)
+  const [retainedMediaIds, setRetainedMediaIds] = useState<string[]>([])
   const [unitCourseId, setUnitCourseId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState('')
   const [saving, setSaving] = useState(false)
   const [handout, setHandout] = useState(initialHandout)
   const [savingHandout, setSavingHandout] = useState(false)
 
-  const openPath = (edit: boolean) => { setEditingPath(edit); setEditingCourse(null); setEditingUnit(null); setUnitCourseId(null); setDialog('path') }
+  useEffect(() => {
+    setRetainedMediaIds(editingUnit?.mediaIds ?? (editingUnit?.mediaId ? [editingUnit.mediaId] : []))
+  }, [editingUnit])
+
+  const openPath = (edit: boolean) => { setEditingPath(edit); setEditingCourse(null); setEditingUnit(null); setRetainedMediaIds([]); setUnitCourseId(null); setDialog('path') }
   const close = (force = false) => {
     if (saving && !force) return
     setDialog(null)
     setEditingPath(false)
     setEditingCourse(null)
     setEditingUnit(null)
+    setRetainedMediaIds([])
     setUnitCourseId(null)
   }
 
@@ -56,7 +62,7 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
         return
       }
       if (files.length) {
-        const existingMediaIds = editingUnit?.mediaIds ?? (editingUnit?.mediaId ? [editingUnit.mediaId] : [])
+        const existingMediaIds = editingUnit ? retainedMediaIds : []
         const uploadedMediaIds: string[] = []
         for (const file of files) {
         const upload = new FormData()
@@ -70,6 +76,9 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
         const mediaIds = [...new Set([...existingMediaIds, ...uploadedMediaIds])]
         body.mediaIds = mediaIds
         body.mediaId = mediaIds[0]
+      } else if (kind === 'unit' && editingUnit) {
+        body.mediaIds = retainedMediaIds
+        body.mediaId = retainedMediaIds[0]
       }
       const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Origin: window.location.origin }, body: JSON.stringify(body) })
       if (!response.ok) { const error = await response.json().catch(() => ({})) as { message?: string }; setFeedback(error.message ?? '培训内容保存失败，请稍后重试。'); return }
@@ -157,6 +166,19 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
       footer={<><button className="button button--quiet" type="button" onClick={() => close()} disabled={saving}>取消</button><button className="button button--primary" type="submit" form="training-editor-form" disabled={saving}>{saving ? '保存中…' : dialog === 'path' && !editingPath ? '创建路径' : '保存修改'}</button></>}
     >
       {dialog ? <form key={`${dialog}-${editingPath}-${editingCourse?.id ?? ''}-${editingUnit?.id ?? ''}-${unitCourseId ?? ''}`} className="admin-form" id="training-editor-form" action={save}>{dialog === 'path' ? <><label><span>路径名称</span><input className="form-control" name="title" defaultValue={editingPath ? path.title : ''} required /></label><label><span>路径说明</span><textarea className="form-control" name="summary" defaultValue={editingPath ? path.summary : ''} rows={3} /></label><label><span>默认期限（天）</span><input className="form-control" name="dueDays" type="number" min="1" max="365" defaultValue={defaultDueDays} required /></label></> : dialog === 'unit' || dialog === 'newUnit' ? <><label><span>单元名称</span><input className="form-control" name="title" defaultValue={editingUnit?.title ?? ''} required /></label><label><span>单元说明</span><textarea className="form-control" name="summary" defaultValue={editingUnit?.description ?? ''} rows={3} /></label><label><span>单元类型</span><select className="form-control" name="unitType" defaultValue={editingUnit?.type ?? 'video'}><option value="video">视频</option><option value="html">HTML 讲义</option><option value="article">图文</option><option value="pdf">PDF</option><option value="feishuDoc">飞书文档</option></select></label><label><span>单元资源（可选）</span><input className="form-control" name="media" type="file" multiple accept="text/html,.html,text/markdown,.md,video/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/webp" /><small>{editingUnit?.mediaId ? '不选择文件则保留当前资源；选择新文件会追加到当前资源列表，旧资源继续保留。' : '可一次上传多个视频、HTML、PDF 或文档资源。'}</small></label></> : <><label><span>课程名称</span><input className="form-control" name="title" defaultValue={editingCourse?.title ?? ''} required /></label><label><span>课程说明</span><textarea className="form-control" name="summary" defaultValue={editingCourse?.summary ?? ''} rows={3} /></label><label><span>课程分类</span><input className="form-control" name="category" defaultValue={editingCourse?.category ?? '新员工必看'} /></label>{!editingCourse ? <div className="admin-form__grid"><label><span>第一个单元（可选）</span><input className="form-control" name="unitTitle" /></label><label><span>单元类型</span><select className="form-control" name="unitType" defaultValue="video"><option value="video">视频</option><option value="html">HTML 讲义</option><option value="article">图文</option><option value="pdf">PDF</option><option value="feishuDoc">飞书文档</option></select></label><label><span>第一个单元资源（可选）</span><input className="form-control" name="media" type="file" multiple accept="text/html,.html,application/markdown,text/markdown,.md,video/mp4,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/webp" /></label></div> : null}</>}</form> : null}
+      {dialog === 'unit' && editingUnit?.resources?.length ? <div className="resource-editor" aria-label="当前单元资源">
+        <span>当前资源</span>
+        <div className="resource-editor__list">
+          {editingUnit.resources.map((resource) => retainedMediaIds.includes(resource.id) ? <div className="resource-editor__item" key={resource.id}>
+            <span title={resource.filename || resource.title}>{resource.filename || resource.title}</span>
+            <div className="resource-editor__actions">
+              <a className="table-action" href={resource.url} target="_blank" rel="noreferrer">预览</a>
+              <button className="table-icon-button" type="button" aria-label={`移除资源 ${resource.title}`} onClick={() => setRetainedMediaIds((current) => current.filter((id) => id !== resource.id))}><Trash2 size={15} aria-hidden="true" /></button>
+            </div>
+          </div> : null)}
+        </div>
+        <small>“预览”会在新标签页打开资源；移除只解除当前单元关联，不会立即删除文件。</small>
+      </div> : null}
     </AdminDialog>
   </>
 }
