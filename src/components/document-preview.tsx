@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { ExternalLink } from 'lucide-react'
 import { HtmlDocumentPreview } from '@/components/html-document-preview'
 import { MarkdownDocumentPreview } from '@/components/markdown-document-preview'
+import { DocxDocumentPreview } from '@/components/docx-document-preview'
 
 interface DocumentPreviewProps {
   title: string
@@ -38,17 +39,7 @@ export function DocumentPreview({ title, type, url }: DocumentPreviewProps) {
   }
 
   if (type === 'document') {
-    return (
-      <div className="document-preview document-preview--document">
-        <iframe className="document-preview__frame" title={`${title} 文档预览`} src={url} />
-        <div className="document-preview__toolbar">
-          <span>浏览器支持时会直接显示文档；若未显示，可打开或下载文件。</span>
-          <a className="document-preview__fallback" href={downloadUrl} download>
-            下载 Word 文档<ExternalLink size={14} aria-hidden="true" />
-          </a>
-        </div>
-      </div>
-    )
+    return <DocxDocumentPreview title={title} url={url} />
   }
 
   return (
