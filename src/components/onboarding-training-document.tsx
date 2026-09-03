@@ -16,14 +16,14 @@ export function OnboardingTrainingDocument() {
           <h2 id="onboarding-document-title">新人培训手册</h2>
           <p>这份讲义与入职视频使用同一内容框架。建议先通读，再开始下方测评。</p>
         </div>
-        <span className="document-version">更新于 2026.08.14</span>
+        <span className="document-version">更新于 2026.09.02</span>
       </header>
 
       <nav className="onboarding-document__toc" aria-label="培训文档目录">
         <a href="#industry"><span>01</span>游戏行业基础</a>
         <a href="#company"><span>02</span>认识乐堡</a>
         <a href="#workplace"><span>03</span>职场协作</a>
-        <a href="#first-week"><span>04</span>第一周清单</a>
+        <a href="#first-week"><span>04</span>首周任务</a>
       </nav>
 
       <section className="training-chapter" id="industry">
@@ -79,12 +79,14 @@ export function OnboardingTrainingDocument() {
         <div className="training-chapter__index"><BookOpen size={20} aria-hidden="true" /><span>04</span></div>
         <div className="training-chapter__body">
           <p className="eyebrow">入职行动</p>
-          <h3>第一周完成这四件事</h3>
+          <h3>完成从“新同学”到“团队成员”的第一步</h3>
           <ul className="first-week-list">
-            <li><span>01</span><div><strong>完成账号与设备检查</strong><p>确认飞书、邮箱、办公设备及岗位所需权限可以正常使用。</p></div></li>
-            <li><span>02</span><div><strong>认识团队与协作角色</strong><p>明确直属负责人、指导人、核心协作者及常用沟通渠道。</p></div></li>
-            <li><span>03</span><div><strong>阅读员工手册</strong><p>重点了解考勤、假期、信息安全和行政管理要求。</p></div></li>
-            <li><span>04</span><div><strong>完成培训测评</strong><p>从题库随机抽取题目，提交后可以查看解析并重新尝试。</p></div></li>
+            <li><span>01</span><div><strong>完成入职手续及办公环境配置</strong><p>完成合同、设备、飞书与岗位权限配置，并确认电脑、网络、耳机及常用软件可以正常使用。</p></div></li>
+            <li><span>02</span><div><strong>了解公司及体验产品</strong><p>了解公司、组织与产品，完成新人培训和测评，熟悉考勤、请假、报销、会议室及办公安全等基本制度，并体验公司产品。</p></div></li>
+            <li><span>03</span><div><strong>加入团队及项目协作群</strong><p>加入部门、项目、新人及岗位相关群组，阅读公告、置顶消息和项目介绍，建立常用联系人和协作渠道。</p></div></li>
+            <li><span>04</span><div><strong>认识团队成员及关键协作伙伴</strong><p>与直属负责人、指导人、团队成员及跨职能协作伙伴建立联系，了解各自的职责和配合方式。</p></div></li>
+            <li><span>05</span><div><strong>了解项目背景与当前进展</strong><p>阅读项目介绍、版本计划、需求和新人资料，了解项目阶段、目标、里程碑、当前挑战，并参加相关会议。</p></div></li>
+            <li><span>06</span><div><strong>完成首周复盘</strong><p>整理已完成事项、新的理解、使用过的工具和流程、待解决问题及下周计划，并与指导人或负责人确认后续安排。</p></div></li>
           </ul>
         </div>
       </section>
