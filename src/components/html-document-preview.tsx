@@ -49,6 +49,7 @@ const prepareHtmlPreview = (content: string, baseHref: string) => {
 }
 
 export function HtmlDocumentPreview({ title, url }: { title: string; url: string }) {
+  const downloadUrl = `${url}${url.includes('?') ? '&' : '?'}download=1`
   const [content, setContent] = useState<string | null>(null)
   const [error, setError] = useState('')
   const baseHref = useMemo(() => {
@@ -90,8 +91,8 @@ export function HtmlDocumentPreview({ title, url }: { title: string; url: string
       )}
       <div className="document-preview__toolbar">
         <span>已按网页效果渲染</span>
-        <a className="document-preview__fallback" href={url} target="_blank" rel="noreferrer">
-          在新窗口打开 HTML 讲义<ExternalLink size={14} aria-hidden="true" />
+        <a className="document-preview__fallback" href={downloadUrl} target="_blank" rel="noreferrer" download>
+          下载 HTML 原文件<ExternalLink size={14} aria-hidden="true" />
         </a>
       </div>
     </div>

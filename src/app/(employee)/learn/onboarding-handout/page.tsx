@@ -21,7 +21,7 @@ export default async function OnboardingHandoutPage({ searchParams }: { searchPa
       <Link className="handout-page__back" href={backHref}>
         <ArrowLeft size={16} aria-hidden="true" />返回培训视频
       </Link>
-      {handout.mediaUrl ? <DocumentPreview title={handout.title} type="html" url={handout.mediaUrl} /> : <OnboardingTrainingDocument />}
+      {handout.mediaUrl ? <DocumentPreview title={handout.title} type={handout.fileType === 'doc' || handout.fileType === 'docx' ? 'document' : handout.fileType === 'pdf' ? 'pdf' : handout.fileType === 'markdown' ? 'markdown' : handout.fileType === 'html' ? 'html' : 'download'} url={handout.mediaUrl} /> : <OnboardingTrainingDocument />}
     </div>
   )
 }

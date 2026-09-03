@@ -35,7 +35,7 @@ export function ReferenceDocumentBrowser({ documents }: { documents: ReferenceDo
         <header className="service-group__heading">
           <div>
             <h2 id="reference-document-group">全部资料</h2>
-            <p>点开即可阅读，无需下载</p>
+            <p>点开即可阅读，也可以下载原文件</p>
           </div>
           <span>{visible.length} 份</span>
         </header>

@@ -105,6 +105,7 @@ export function VideoPlayer({ unitId, source, initialProgress }: VideoPlayerProp
         )}
         <ProgressBar value={progress} label="视频观看进度" />
         <strong className="tabular">{progress}%</strong>
+        <a className="video-meta__download" href={`${source}${source.includes('?') ? '&' : '?'}download=1`} download>下载视频</a>
       </div>
     </div>
   )

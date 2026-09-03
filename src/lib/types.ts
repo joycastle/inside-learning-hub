@@ -77,6 +77,7 @@ export interface OnboardingHandout {
   summary: string
   mediaId?: string
   mediaUrl?: string
+  fileType?: 'html' | 'markdown' | 'pdf' | 'doc' | 'docx' | 'video' | 'image' | 'download'
   updatedAt?: string
 }
 

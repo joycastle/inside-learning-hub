@@ -147,11 +147,11 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
     <div className="admin-page-actions admin-page-actions--standalone admin-training-toolbar"><label className="compact-select-label admin-training-path-control"><span>当前培训路径</span><select className="form-control" value={path.id} disabled><option value={path.id}>{path.title}</option></select></label><button className="button button--secondary" type="button" onClick={() => openPath(true)}><Pencil size={16} aria-hidden="true" />编辑培训内容</button><button className="button button--primary" type="button" onClick={() => openPath(false)}><Plus size={16} aria-hidden="true" />新建培训路径</button></div>
     {feedback ? <p className="admin-feedback" role="status">{feedback}</p> : null}
     <section className="admin-panel admin-handout-settings" aria-labelledby="handout-settings-heading">
-      <div className="panel-heading"><div><h2 id="handout-settings-heading">新人培训手册</h2><p>员工端视频下方显示的配套讲义。上传 HTML 后会替换当前版本，旧文件保留 7 天。</p></div></div>
+      <div className="panel-heading"><div><h2 id="handout-settings-heading">新人培训手册</h2><p>员工端视频下方显示的配套讲义。支持 Word、PDF、HTML 和 Markdown，旧文件保留 7 天。</p></div></div>
       <form className="admin-form admin-handout-settings__form" action={saveHandout}>
         <label><span>讲义名称</span><input className="form-control" name="handoutTitle" defaultValue={handout.title} required /></label>
         <label><span>讲义说明</span><input className="form-control" name="handoutSummary" defaultValue={handout.summary} /></label>
-        <label><span>替换 HTML 讲义</span><input className="form-control" name="handoutMedia" type="file" accept="text/html,.html,.htm" /><small>{handout.mediaId ? '当前已使用上传文件；不选择文件则只保存名称和说明。' : '当前未上传文件，员工端使用内置讲义；上传后将使用文件内容。'}</small></label>
+        <label><span>替换讲义文件</span><input className="form-control" name="handoutMedia" type="file" accept=".doc,.docx,.pdf,.html,.htm,.md,.markdown,text/html,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /><small>{handout.mediaId ? '当前已使用上传文件；不选择文件则只保存名称和说明。' : '当前未上传文件，员工端使用内置讲义；上传后将使用文件内容。'}</small></label>
         <div><button className="button button--primary" type="submit" disabled={savingHandout}>{savingHandout ? '保存中…' : '保存讲义设置'}</button></div>
       </form>
     </section>
