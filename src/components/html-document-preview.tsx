@@ -91,7 +91,7 @@ export function HtmlDocumentPreview({ title, url }: { title: string; url: string
       )}
       <div className="document-preview__toolbar">
         <span>已按网页效果渲染</span>
-        <a className="document-preview__fallback" href={downloadUrl} target="_blank" rel="noreferrer" download>
+        <a className="document-preview__fallback" href={downloadUrl} download>
           下载 HTML 原文件<ExternalLink size={14} aria-hidden="true" />
         </a>
       </div>

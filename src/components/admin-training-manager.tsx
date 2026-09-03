@@ -23,6 +23,8 @@ export function AdminTrainingManager({ initialPath, initialHandout }: { initialP
   const [savingHandout, setSavingHandout] = useState(false)
 
   useEffect(() => {
+    // Synchronize the resource selection when the edit dialog switches units.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRetainedMediaIds(editingUnit?.mediaIds ?? (editingUnit?.mediaId ? [editingUnit.mediaId] : []))
   }, [editingUnit])
 
